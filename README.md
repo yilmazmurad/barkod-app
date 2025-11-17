@@ -1,59 +1,184 @@
-# BarkodApp
+# 📦 Barkod Okuma Uygulaması
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.10.
+Angular 20.3 ile geliştirilmiş modern bir barkod okuma ve stok yönetim uygulaması. Kablosuz barkod okuyucu ile gerçek zamanlı okuma, manuel giriş ve gelişmiş düzenleme özellikleri sunar.
 
-## Development server
+## ✨ Özellikler
 
-To start a local development server, run:
+### 🎯 Ana Özellikler
+- ✅ **Gerçek zamanlı barkod okuma** - Kablosuz barkod okuyucu desteği
+- ✅ **Manuel barkod girişi** - Okunamayan barkodlar için elle giriş
+- ✅ **Fiş bazlı oturum yönetimi** - Her fiş için ayrı kayıt
+- ✅ **Hızlı düzenleme** - Inline cell editing ve +/- butonları
+- ✅ **Geçmiş kayıtlar** - Bekleyen işlemleri görüntüleme ve yönetme
+- ✅ **Offline destek** - LocalStorage ile çevrimdışı çalışma
+- ✅ **Responsive tasarım** - Mobil, tablet ve masaüstü uyumlu
 
+### 🔧 Teknik Özellikler
+- Angular 20.3.0 (Standalone Components)
+- Tailwind CSS 3.4.0
+- Server-Side Rendering (SSR) desteği
+- RxJS ile reaktif state yönetimi
+- JWT tabanlı authentication
+- HTTP interceptor ile token yönetimi
+
+## 🚀 Kurulum
+
+### Gereksinimler
+- Node.js 18.x veya üzeri
+- npm 9.x veya üzeri
+
+### Adımlar
+
+1. **Projeyi klonlayın:**
 ```bash
-ng serve
+git clone https://github.com/yilmazmurad/barkod-app.git
+cd barkod-app
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
+2. **Bağımlılıkları yükleyin:**
 ```bash
-ng generate component component-name
+npm install
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
+3. **Geliştirme sunucusunu başlatın:**
 ```bash
-ng generate --help
+npm start
 ```
 
-## Building
-
-To build the project run:
-
-```bash
-ng build
+4. **Tarayıcınızda açın:**
+```
+http://localhost:4200/
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Uygulama otomatik olarak yeniden yüklenecektir.
 
-## Running unit tests
+## 📖 Kullanım
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+### Giriş Yapma
+- Herhangi bir kullanıcı adı ve şifre ile giriş yapabilirsiniz (Mock authentication)
+- Varsayılan: `admin` / `admin`
 
-```bash
-ng test
+### Barkod Okutma
+1. Fiş numarası ve tarih girin
+2. "Okumaya Başla" butonuna tıklayın
+3. Barkod okuyucunuzla ürünleri okutun
+4. Manuel giriş için form alanını kullanın
+5. Miktarları düzenlemek için:
+   - Sayıya tıklayın (inline editing)
+   - +/- butonlarını kullanın
+   - Düzenle butonuna tıklayın
+
+### Hızlı Düzenleme
+- **Barkod:** Barkod numarasına tıklayarak değiştirin
+- **Miktar:** Sayıya tıklayarak düzenleyin
+- **Enter:** Kaydet
+- **Esc:** İptal
+- **+/-:** Hızlı miktar artır/azalt
+
+### Kayıtları Yönetme
+- **Kaydet:** İşlemi daha sonra göndermek üzere kaydedin
+- **Gönder:** API'ye gönder (Mock)
+- **Geçmiş:** Bekleyen kayıtları görüntüleyin
+
+## 🏗️ Proje Yapısı
+
+```
+src/
+├── app/
+│   ├── components/
+│   │   ├── barcode-scan/    # Ana barkod okuma sayfası
+│   │   ├── history/          # Geçmiş kayıtlar
+│   │   └── login/            # Giriş sayfası
+│   ├── guards/
+│   │   └── auth.guard.ts     # Route koruma
+│   ├── interceptors/
+│   │   └── auth.interceptor.ts  # HTTP interceptor
+│   └── services/
+│       ├── auth.service.ts      # Kimlik doğrulama
+│       ├── barcode.service.ts   # Barkod yönetimi
+│       └── api.service.ts       # HTTP istekleri
+├── environments/
+│   ├── environment.ts           # Production
+│   └── environment.development.ts  # Development
+└── styles.css                   # Global stil ve Tailwind
 ```
 
-## Running end-to-end tests
+## 🛠️ Komutlar
 
-For end-to-end (e2e) testing, run:
-
+### Geliştirme
 ```bash
-ng e2e
+npm start              # Dev sunucusu (port 4200)
+npm run watch          # Watch mode ile build
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+### Build
+```bash
+npm run build          # Production build
+npm run build:dev      # Development build
+```
 
-## Additional Resources
+### Test
+```bash
+npm test               # Unit testleri çalıştır
+```
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+### SSR
+```bash
+npm run serve:ssr      # SSR sunucusu (port 4000)
+```
+
+## 🎨 Tailwind CSS
+
+Proje Tailwind CSS 3.4.0 kullanmaktadır. Özel stiller için:
+
+```css
+/* src/styles.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+Yapılandırma: `tailwind.config.js`
+
+## 🔐 Güvenlik
+
+- JWT token tabanlı authentication
+- Route guard ile sayfa koruması
+- HTTP interceptor ile otomatik token enjeksiyonu
+- SSR uyumlu localStorage yönetimi (isPlatformBrowser)
+
+## 📱 Responsive Tasarım
+
+- **Mobil:** 320px - 767px
+- **Tablet:** 768px - 1023px
+- **Masaüstü:** 1024px ve üzeri
+
+## 🌐 Tarayıcı Desteği
+
+- Chrome (son 2 versiyon)
+- Firefox (son 2 versiyon)
+- Safari (son 2 versiyon)
+- Edge (son 2 versiyon)
+
+## 📝 Lisans
+
+Bu proje MIT lisansı altında lisanslanmıştır.
+
+## 🤝 Katkıda Bulunma
+
+1. Fork yapın
+2. Feature branch oluşturun (`git checkout -b feature/yeniOzellik`)
+3. Değişikliklerinizi commit edin (`git commit -m 'feat: yeni özellik eklendi'`)
+4. Branch'inizi push edin (`git push origin feature/yeniOzellik`)
+5. Pull Request oluşturun
+
+## 📞 İletişim
+
+- **Geliştirici:** Murat Yılmaz
+- **GitHub:** [@yilmazmurad](https://github.com/yilmazmurad)
+
+## 🙏 Teşekkürler
+
+- [Angular](https://angular.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [RxJS](https://rxjs.dev/)

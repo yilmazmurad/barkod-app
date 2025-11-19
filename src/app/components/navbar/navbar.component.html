@@ -1,0 +1,81 @@
+<nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+    <div class="w-full px-4">
+        <div class="flex justify-between h-16 items-center">
+            <!-- Logo / Brand -->
+            <div class="flex items-center gap-3">
+                <div class="bg-white/10 p-2 rounded-lg backdrop-blur-sm border border-white/10">
+                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z">
+                        </path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-wide">Barkod<span class="text-blue-400">Sistemi</span>
+                    </h1>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider leading-none">Stok Yönetimi</p>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex items-center gap-4">
+                <!-- Actions -->
+                <div class="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/5">
+                    <button (click)="navigateToScan()"
+                        [ngClass]="{'text-white bg-blue-600 shadow-sm shadow-blue-500/20': isActive('/scan'), 'text-slate-400 hover:text-white hover:bg-white/5': !isActive('/scan')}"
+                        class="px-3 py-1.5 text-sm font-medium rounded-lg transition-all">
+                        Okuma
+                    </button>
+                    <button (click)="navigateToPending()"
+                        [ngClass]="{'text-white bg-amber-600 shadow-sm shadow-amber-500/20': isActive('/pending'), 'text-slate-400 hover:text-white hover:bg-white/5': !isActive('/pending')}"
+                        class="px-3 py-1.5 text-sm font-medium rounded-lg transition-all flex items-center gap-2">
+                        Bekleyenler
+                        <span *ngIf="(barcodeService.pendingSessions$ | async)?.length as count"
+                            class="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-[10px] font-bold rounded-full"
+                            [ngClass]="isActive('/pending') ? 'bg-white text-amber-600' : 'bg-amber-500 text-white'">
+                            {{ count }}
+                        </span>
+                    </button>
+                    <button (click)="navigateToHistory()"
+                        [ngClass]="{'text-white bg-green-600 shadow-sm shadow-green-500/20': isActive('/history'), 'text-slate-400 hover:text-white hover:bg-white/5': !isActive('/history')}"
+                        class="px-3 py-1.5 text-sm font-medium rounded-lg transition-all">
+                        Geçmiş
+                    </button>
+                </div>
+
+                <div class="h-6 w-px bg-white/10 mx-1"></div>
+
+                <!-- User Profile & Dropdown -->
+                <div class="relative">
+                    <button (click)="toggleDropdown()"
+                        class="hidden md:flex items-center gap-3 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-full border border-white/5 transition-all cursor-pointer">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold shadow-inner">
+                            {{ authService.currentUserValue?.username?.charAt(0)?.toUpperCase() }}
+                        </div>
+                        <span class="text-sm font-medium text-slate-200 pr-2">{{ authService.currentUserValue?.username
+                            }}</span>
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div *ngIf="isDropdownOpen"
+                        class="absolute right-0 mt-2 w-48 bg-slate-800 rounded-xl shadow-lg border border-white/10 py-1 z-50">
+                        <button (click)="logout()"
+                            class="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white flex items-center gap-2 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                                </path>
+                            </svg>
+                            Çıkış Yap
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>

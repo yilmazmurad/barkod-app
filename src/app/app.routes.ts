@@ -17,6 +17,11 @@ export const routes: Routes = [
         canActivate: [authGuard]
     },
     {
+        path: 'pending',
+        loadComponent: () => import('./components/pending/pending.component').then(m => m.PendingComponent),
+        canActivate: [authGuard]
+    },
+    {
         path: '',
         redirectTo: '/scan',
         pathMatch: 'full'

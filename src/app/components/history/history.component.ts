@@ -12,7 +12,7 @@ import { AuthService } from '../../services/auth.service';
     styleUrls: ['./history.component.css']
 })
 export class HistoryComponent implements OnInit {
-    pendingSessions: BarcodeSession[] = [];
+    sentSessions: BarcodeSession[] = [];
 
     constructor(
         public barcodeService: BarcodeService,
@@ -21,8 +21,8 @@ export class HistoryComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
-        this.barcodeService.pendingSessions$.subscribe(sessions => {
-            this.pendingSessions = sessions;
+        this.barcodeService.sentSessions$.subscribe(sessions => {
+            this.sentSessions = sessions;
         });
     }
 
@@ -30,31 +30,24 @@ export class HistoryComponent implements OnInit {
         return session.items.reduce((sum, item) => sum + item.quantity, 0);
     }
 
-    loadSession(session: BarcodeSession): void {
-        if (confirm('Bu kaydı düzenlemek için yüklemek istiyor musunuz?')) {
-            this.barcodeService.startNewSession(session.fiscNumber, session.date);
-            session.items.forEach(item => {
-                this.barcodeService.addBarcode(item.barcode, item.quantity);
-            });
-            this.barcodeService.removePendingSession(session.fiscNumber);
-            this.router.navigate(['/scan']);
+    // Geçmiş kayıtlar sadece görüntülenebilir, düzenlenemez (şimdilik)
+    viewSession(session: BarcodeSession): void {
+        // Detay görüntüleme eklenebilir
+        console.log('View session:', session);
+    }
+
+    clearAllHistory(): void {
+        if (confirm('Tüm geçmiş kayıtları silmek istediğinize emin misiniz?')) {
+            this.barcodeService.clearSentSessions();
         }
     }
 
-    deleteSession(fiscNumber: string): void {
-        if (confirm('Bu kaydı silmek istediğinize emin misiniz?')) {
-            this.barcodeService.removePendingSession(fiscNumber);
-        }
-    }
-
-    clearAllSessions(): void {
-        if (confirm('Tüm kayıtları silmek istediğinize emin misiniz?')) {
-            this.barcodeService.clearPendingSessions();
-        }
-    }
-
-    backToScan(): void {
+    navigateToScan(): void {
         this.router.navigate(['/scan']);
+    }
+
+    navigateToPending(): void {
+        this.router.navigate(['/pending']);
     }
 
     logout(): void {

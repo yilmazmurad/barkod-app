@@ -26,12 +26,40 @@ export class BarcodeService {
     private pendingSessionsSubject = new BehaviorSubject<BarcodeSession[]>([]);
     public pendingSessions$ = this.pendingSessionsSubject.asObservable();
 
+    private sentSessionsSubject = new BehaviorSubject<BarcodeSession[]>([]);
+    public sentSessions$ = this.sentSessionsSubject.asObservable();
+
     private platformId = inject(PLATFORM_ID);
     private isBrowser: boolean;
 
     constructor() {
         this.isBrowser = isPlatformBrowser(this.platformId);
         this.loadPendingSessions();
+        this.loadSentSessions();
+        this.loadCurrentSession();
+    }
+
+    private loadCurrentSession(): void {
+        if (!this.isBrowser) return;
+        const stored = localStorage.getItem('currentSession');
+        if (stored) {
+            try {
+                const session = JSON.parse(stored);
+                this.currentSessionSubject.next(session);
+            } catch (error) {
+                console.error('Error loading current session:', error);
+            }
+        }
+    }
+
+    private saveCurrentSession(): void {
+        if (!this.isBrowser) return;
+        const session = this.currentSessionSubject.value;
+        if (session) {
+            localStorage.setItem('currentSession', JSON.stringify(session));
+        } else {
+            localStorage.removeItem('currentSession');
+        }
     }
 
     startNewSession(fiscNumber: string, date: Date): void {
@@ -41,6 +69,7 @@ export class BarcodeService {
             items: []
         };
         this.currentSessionSubject.next(session);
+        this.saveCurrentSession();
     }
 
     addBarcode(barcode: string, quantity: number = 1): void {
@@ -64,6 +93,7 @@ export class BarcodeService {
         }
 
         this.currentSessionSubject.next({ ...session });
+        this.saveCurrentSession();
     }
 
     updateBarcodeQuantity(barcode: string, quantity: number): void {
@@ -75,6 +105,7 @@ export class BarcodeService {
             item.quantity = quantity;
             item.isEdited = true;
             this.currentSessionSubject.next({ ...session });
+            this.saveCurrentSession();
         }
     }
 
@@ -84,10 +115,12 @@ export class BarcodeService {
 
         session.items = session.items.filter(item => item.barcode !== barcode);
         this.currentSessionSubject.next({ ...session });
+        this.saveCurrentSession();
     }
 
     clearSession(): void {
         this.currentSessionSubject.next(null);
+        this.saveCurrentSession();
     }
 
     saveToPending(): void {
@@ -121,6 +154,16 @@ export class BarcodeService {
         }
     }
 
+    getPendingSession(fiscNumber: string): BarcodeSession | undefined {
+        return this.pendingSessionsSubject.value.find(s => s.fiscNumber === fiscNumber);
+    }
+
+    resumeSession(session: BarcodeSession): void {
+        this.removePendingSession(session.fiscNumber);
+        this.currentSessionSubject.next({ ...session, isPending: false });
+        this.saveCurrentSession();
+    }
+
     removePendingSession(fiscNumber: string): void {
         const pending = this.pendingSessionsSubject.value.filter(
             s => s.fiscNumber !== fiscNumber
@@ -135,6 +178,38 @@ export class BarcodeService {
         this.pendingSessionsSubject.next([]);
         if (this.isBrowser) {
             localStorage.removeItem('pendingSessions');
+        }
+    }
+
+    saveToSent(session: BarcodeSession): void {
+        const sent = this.sentSessionsSubject.value;
+        session.isPending = false;
+        sent.push({ ...session });
+        this.sentSessionsSubject.next(sent);
+
+        if (this.isBrowser) {
+            localStorage.setItem('sentSessions', JSON.stringify(sent));
+        }
+    }
+
+    private loadSentSessions(): void {
+        if (!this.isBrowser) return;
+
+        const stored = localStorage.getItem('sentSessions');
+        if (stored) {
+            try {
+                const sessions = JSON.parse(stored);
+                this.sentSessionsSubject.next(sessions);
+            } catch (error) {
+                console.error('Error loading sent sessions:', error);
+            }
+        }
+    }
+
+    clearSentSessions(): void {
+        this.sentSessionsSubject.next([]);
+        if (this.isBrowser) {
+            localStorage.removeItem('sentSessions');
         }
     }
 }

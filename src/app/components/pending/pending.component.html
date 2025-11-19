@@ -6,29 +6,30 @@
 
         <div class="flex justify-between items-center shrink-0">
             <div class="flex items-center gap-2">
-                <h2 class="text-lg font-bold text-gray-900">Gönderilen Fişler</h2>
-                <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{
-                    sentSessions.length }} adet</span>
+                <h2 class="text-lg font-bold text-gray-900">Kaydedilmiş Fişler</h2>
+                <span class="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{
+                    pendingSessions.length }} adet</span>
             </div>
-            @if (sentSessions.length > 0) {
-            <button (click)="clearAllHistory()"
+            @if (pendingSessions.length > 0) {
+            <button (click)="clearAllSessions()"
                 class="px-4 py-2 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 transition-colors">
-                Geçmişi Temizle
+                Tümünü Sil
             </button>
             }
         </div>
 
-        @if (sentSessions.length === 0) {
+        @if (pendingSessions.length === 0) {
         <div
             class="flex-1 flex flex-col items-center justify-center text-gray-400 bg-white rounded-xl border border-gray-100 shadow-sm">
             <div class="bg-gray-50 p-6 rounded-full shadow-sm mb-4">
                 <svg class="h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                    </path>
                 </svg>
             </div>
             <h3 class="text-lg font-medium text-gray-600">Kayıt yok</h3>
-            <p class="text-sm text-gray-400 mt-1">Henüz gönderilmiş fiş bulunmuyor.</p>
+            <p class="text-sm text-gray-400 mt-1">Henüz kaydedilmiş fiş bulunmuyor.</p>
         </div>
         } @else {
         <div class="flex-1 overflow-auto bg-white rounded-xl border border-gray-100 shadow-sm">
@@ -48,13 +49,13 @@
                             Toplam Miktar
                         </th>
                         <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
-                            Durum
+                            İşlemler
                         </th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-50">
-                    @for (session of sentSessions; track session.fiscNumber) {
-                    <tr class="hover:bg-green-50/30 transition-colors group">
+                    @for (session of pendingSessions; track session.fiscNumber) {
+                    <tr class="hover:bg-amber-50/30 transition-colors group">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {{ session.fiscNumber }}
                         </td>
@@ -68,10 +69,21 @@
                             {{ getTotalQuantity(session) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Gönderildi
-                            </span>
+                            <div class="flex justify-end gap-2">
+                                <button (click)="loadSession(session)"
+                                    class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-xs font-bold uppercase tracking-wide">
+                                    Düzenle
+                                </button>
+                                <button (click)="deleteSession(session.fiscNumber)"
+                                    class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Sil">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                        </path>
+                                    </svg>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     }

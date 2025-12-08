@@ -2,9 +2,11 @@ import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
+import { environment } from '../../environments/environment.development';
 
 export interface User {
-    id: string;
     username: string;
     token: string;
 }
@@ -18,7 +20,10 @@ export class AuthService {
     private platformId = inject(PLATFORM_ID);
     private isBrowser: boolean;
 
-    constructor(private router: Router) {
+    constructor(
+        private router: Router,
+        private http: HttpClient
+    ) {
         this.isBrowser = isPlatformBrowser(this.platformId);
         let storedUser: string | null = null;
 
@@ -41,24 +46,23 @@ export class AuthService {
     }
 
     login(username: string, password: string): Observable<User> {
-        // TODO: API çağrısı ile değiştirilecek
-        return new Observable(observer => {
-            // Mock login - gerçek API ile değiştirilecek
-            setTimeout(() => {
-                const user: User = {
-                    id: '1',
-                    username: username,
-                    token: 'mock-jwt-token-' + Date.now()
-                };
+        return this.http.post<any>(`${environment.apiUrl}/auth/login`, { username, password })
+            .pipe(map(response => {
+                if (response.success) {
+                    const user: User = {
+                        username: response.adisoyadi,
+                        token: response.token
+                    };
 
-                if (this.isBrowser) {
-                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    if (this.isBrowser) {
+                        localStorage.setItem('currentUser', JSON.stringify(user));
+                    }
+                    this.currentUserSubject.next(user);
+                    return user;
+                } else {
+                    throw new Error(response.message || 'Giriş başarısız');
                 }
-                this.currentUserSubject.next(user);
-                observer.next(user);
-                observer.complete();
-            }, 1000);
-        });
+            }));
     }
 
     logout(): void {

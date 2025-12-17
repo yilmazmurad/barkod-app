@@ -1,6 +1,8 @@
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { ApiService } from './api.service';
 
 export interface BarcodeItem {
     barcode: string;
@@ -14,6 +16,10 @@ export interface BarcodeSession {
     date: Date;
     items: BarcodeItem[];
     isPending?: boolean;
+    cari?: {
+        cari_kodu: string;
+        cari_isim: string;
+    };
 }
 
 @Injectable({
@@ -32,11 +38,44 @@ export class BarcodeService {
     private platformId = inject(PLATFORM_ID);
     private isBrowser: boolean;
 
-    constructor() {
+    constructor(private apiService: ApiService) {
         this.isBrowser = isPlatformBrowser(this.platformId);
         this.loadPendingSessions();
         this.loadSentSessions();
         this.loadCurrentSession();
+    }
+
+    getInitialReceiptDetails(): Observable<{ fiscNumber: string, date: string }> {
+        // 1. Aktif bir oturum var mı?
+        const currentSession = this.currentSessionSubject.value;
+        if (currentSession) {
+            // Varsa onu döndür
+            return of({
+                fiscNumber: currentSession.fiscNumber,
+                date: new Date(currentSession.date).toISOString().split('T')[0]
+            });
+        }
+
+        // 2. Yoksa API'den son fiş numarasını al
+        return this.apiService.getLastFiscNo().pipe(
+            map(response => {
+                // Tarih formatını DD.MM.YYYY -> YYYY-MM-DD çevir
+                const [day, month, year] = response.tarih.split('.');
+                const formattedDate = `${year}-${month}-${day}`;
+                return {
+                    fiscNumber: response.fisno,
+                    date: formattedDate
+                };
+            }),
+            catchError(error => {
+                console.error('Fiş no alınamadı:', error);
+                // Hata durumunda boş/bugün döndür
+                return of({
+                    fiscNumber: '',
+                    date: new Date().toISOString().split('T')[0]
+                });
+            })
+        );
     }
 
     private loadCurrentSession(): void {
@@ -62,14 +101,24 @@ export class BarcodeService {
         }
     }
 
-    startNewSession(fiscNumber: string, date: Date): void {
+    startNewSession(fiscNumber: string, date: Date, cari?: { cari_kodu: string, cari_isim: string }): void {
         const session: BarcodeSession = {
             fiscNumber,
             date,
-            items: []
+            items: [],
+            cari
         };
         this.currentSessionSubject.next(session);
         this.saveCurrentSession();
+    }
+
+    updateSessionCari(cari: { cari_kodu: string, cari_isim: string }): void {
+        const session = this.currentSessionSubject.value;
+        if (session) {
+            session.cari = cari;
+            this.currentSessionSubject.next({ ...session });
+            this.saveCurrentSession();
+        }
     }
 
     addBarcode(barcode: string, quantity: number = 1): void {

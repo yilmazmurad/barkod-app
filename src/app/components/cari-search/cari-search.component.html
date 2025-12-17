@@ -1,0 +1,123 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+    (click)="closeModal()">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200"
+        (click)="$event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/50">
+            <div class="flex items-center gap-2">
+                <h3 class="text-lg font-bold text-gray-900">Cari Hesap Ara</h3>
+            </div>
+            <button (click)="closeModal()"
+                class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Search Controls -->
+        <div class="p-4 space-y-4 bg-white border-b border-gray-100">
+            <!-- Radio Group -->
+            <div class="flex gap-4">
+                <label class="flex items-center gap-2 cursor-pointer group">
+                    <div class="relative flex items-center">
+                        <input type="radio" name="searchField" [(ngModel)]="searchField" value="cari_isim"
+                            class="peer h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500">
+                    </div>
+                    <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">Cari İsim</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer group">
+                    <div class="relative flex items-center">
+                        <input type="radio" name="searchField" [(ngModel)]="searchField" value="cari_kod"
+                            class="peer h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500">
+                    </div>
+                    <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">Cari Kod</span>
+                </label>
+            </div>
+
+            <!-- Search Input -->
+            <div class="flex gap-2">
+                <div class="relative flex-1">
+                    <input type="text" [(ngModel)]="searchString" (keyup.enter)="search()"
+                        class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none text-sm"
+                        [placeholder]="searchField === 'cari_isim' ? 'Cari isim ile ara...' : 'Cari kod ile ara...'">
+                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <button (click)="search()" [disabled]="isLoading"
+                    class="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/20 disabled:opacity-70 disabled:cursor-not-allowed transition-all shadow-sm shadow-blue-200">
+                    @if (isLoading) {
+                    <span>Aranıyor...</span>
+                    } @else {
+                    <span>Ara</span>
+                    }
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Area -->
+        <div class="flex-1 overflow-y-auto bg-gray-50/50 p-4">
+            <!-- Loading State -->
+            @if (isLoading) {
+            <div class="flex flex-col items-center justify-center py-12 text-gray-500">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-3"></div>
+                <span class="text-sm">Sonuçlar getiriliyor...</span>
+            </div>
+            }
+
+            <!-- Empty State -->
+            @if (!isLoading && hasSearched && results.length === 0) {
+            <div class="flex flex-col items-center justify-center py-12 text-gray-500">
+                <span class="text-sm font-medium">Sonuç bulunamadı.</span>
+            </div>
+            }
+
+            <!-- Results Table -->
+            @if (!isLoading && displayedResults.length > 0) {
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 font-medium">Kod</th>
+                            <th class="px-4 py-3 font-medium">İsim</th>
+                            <!-- <th class="px-4 py-3 font-medium w-20 text-center">İşlem</th> -->
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @for (cari of displayedResults; track cari.cari_kodu) {
+                        <tr (click)="selectCari(cari)"
+                            class="hover:bg-blue-50/50 cursor-pointer transition-colors group">
+                            <td class="px-4 py-3 font-medium text-gray-900">{{ cari.cari_kodu }}</td>
+                            <td class="px-4 py-3 text-gray-600 group-hover:text-blue-700">{{ cari.cari_isim }}</td>
+                            <td class="px-4 py-3 text-center">
+                                <!-- <button class="p-1.5 text-blue-600 hover:bg-blue-100 rounded transition-colors">
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </button> -->
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <!-- Limit Warning -->
+                @if (results.length > MAX_RESULTS) {
+                <div
+                    class="px-4 py-3 bg-yellow-50 border-t border-yellow-100 text-yellow-800 text-xs flex items-center justify-center gap-2">
+                    <span>Toplam {{ results.length }} sonuç bulundu. İlk {{ MAX_RESULTS }} kayıt gösteriliyor. Aramanızı
+                        daraltın.</span>
+                </div>
+                }
+            </div>
+            }
+        </div>
+    </div>
+</div>

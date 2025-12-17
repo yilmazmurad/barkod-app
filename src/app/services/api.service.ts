@@ -24,6 +24,17 @@ export class ApiService {
         });
     }
 
+    getLastFiscNo(): Observable<{ fisno: string, tarih: string }> {
+        return this.get<{ fisno: string, tarih: string }>('stok/sonfisno');
+    }
+
+    searchCari(searchField: 'cari_isim' | 'cari_kod', searchString: string): Observable<any[]> {
+        return this.post<any[]>('stok/carisearch', {
+            search_field: searchField,
+            search_string: searchString
+        });
+    }
+
     get<T>(endpoint: string): Observable<T> {
         return this.http.get<T>(`${this.apiUrl}/${endpoint}`, {
             headers: this.getHeaders()

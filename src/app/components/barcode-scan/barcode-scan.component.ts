@@ -4,12 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BarcodeService, BarcodeItem } from '../../services/barcode.service';
 import { AuthService } from '../../services/auth.service';
+import { CariSearchComponent } from '../cari-search/cari-search.component';
 import { Subject, debounceTime } from 'rxjs';
 
 @Component({
     selector: 'app-barcode-scan',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, CariSearchComponent],
     templateUrl: './barcode-scan.component.html',
     styleUrls: ['./barcode-scan.component.css']
 })
@@ -20,6 +21,10 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     date = new Date().toISOString().split('T')[0];
     items: BarcodeItem[] = [];
     currentSession: any = null;
+
+    // Cari Seçimi
+    showCariModal = false;
+    selectedCari: { cari_kodu: string, cari_isim: string } | null = null;
 
     // Barkod okuma için
     private barcodeBuffer = '';
@@ -49,18 +54,32 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        // Mevcut session varsa yükle
+        // 1. Mevcut session değişikliklerini izle
         this.barcodeService.currentSession$.subscribe(session => {
             this.currentSession = session;
             if (session) {
                 this.fiscNumber = session.fiscNumber;
                 this.date = new Date(session.date).toISOString().split('T')[0];
+                this.selectedCari = session.cari || null;
                 // Son eklenen en üstte olacak şekilde sırala (Tarihe göre azalan)
                 this.items = [...session.items].sort((a, b) => {
                     return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
                 });
             } else {
                 this.items = [];
+            }
+        });
+
+        // 2. İlk açılışta fiş no ve tarih bilgisini al
+        this.loadNewReceiptDetails();
+    }
+
+    private loadNewReceiptDetails(): void {
+        this.barcodeService.getInitialReceiptDetails().subscribe(details => {
+            // Eğer aktif session yoksa, API'den gelen değerleri kullan
+            if (!this.currentSession) {
+                this.fiscNumber = details.fiscNumber;
+                this.date = details.date;
             }
         });
     }
@@ -107,7 +126,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
                 alert('Lütfen fiş numarası girin!');
                 return;
             }
-            this.barcodeService.startNewSession(this.fiscNumber, new Date(this.date));
+            this.barcodeService.startNewSession(this.fiscNumber, new Date(this.date), this.selectedCari || undefined);
         }
 
         this.barcodeService.addBarcode(barcode, 1);
@@ -129,7 +148,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
             }
         }
 
-        this.barcodeService.startNewSession(this.fiscNumber, new Date(this.date));
+        this.barcodeService.startNewSession(this.fiscNumber, new Date(this.date), this.selectedCari || undefined);
         setTimeout(() => this.focusBarcodeInput(), 100);
     }
 
@@ -152,7 +171,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
                 alert('Lütfen önce fiş numarası girin!');
                 return;
             }
-            this.barcodeService.startNewSession(this.fiscNumber, new Date(this.date));
+            this.barcodeService.startNewSession(this.fiscNumber, new Date(this.date), this.selectedCari || undefined);
         }
 
         this.barcodeService.addBarcode(this.manualBarcode.trim(), this.manualQuantity);
@@ -219,8 +238,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     clearAll(): void {
         if (confirm('Tüm listeyi temizlemek istediğinize emin misiniz?')) {
             this.barcodeService.clearSession();
-            this.fiscNumber = '';
-            this.date = new Date().toISOString().split('T')[0];
+            this.loadNewReceiptDetails();
         }
     }
 
@@ -231,8 +249,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
         }
         this.barcodeService.saveToPending();
         alert('Fiş bekleyenler listesine kaydedildi. Yeni fiş girişi yapabilirsiniz.');
-        this.fiscNumber = '';
-        this.date = new Date().toISOString().split('T')[0];
+        this.loadNewReceiptDetails();
     }
 
     sendToApi(): void {
@@ -256,8 +273,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
 
         alert('Başarıyla gönderildi ve geçmişe kaydedildi!');
         this.barcodeService.clearSession();
-        this.fiscNumber = '';
-        this.date = new Date().toISOString().split('T')[0];
+        this.loadNewReceiptDetails();
     }
 
     logout(): void {
@@ -270,5 +286,19 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
 
     navigateToPending(): void {
         this.router.navigate(['/pending']);
+    }
+
+    openCariModal() {
+        this.showCariModal = true;
+    }
+
+    closeCariModal() {
+        this.showCariModal = false;
+    }
+
+    onCariSelected(cari: { cari_kodu: string, cari_isim: string }) {
+        this.selectedCari = cari;
+        this.barcodeService.updateSessionCari(cari);
+        this.closeCariModal();
     }
 }

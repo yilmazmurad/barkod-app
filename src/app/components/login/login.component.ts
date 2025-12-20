@@ -22,9 +22,10 @@ export class LoginComponent {
         private router: Router,
         private route: ActivatedRoute
     ) {
-        // Zaten giriş yapmışsa ana sayfaya yönlendir
+        // Zaten giriş yapmışsa yönlendir
         if (this.authService.isAuthenticated()) {
-            this.router.navigate(['/scan']);
+            const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/scan';
+            this.router.navigateByUrl(returnUrl);
         }
     }
 

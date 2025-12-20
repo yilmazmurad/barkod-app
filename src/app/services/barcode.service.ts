@@ -5,21 +5,19 @@ import { map, catchError } from 'rxjs/operators';
 import { ApiService } from './api.service';
 
 export interface BarcodeItem {
-    barcode: string;
-    quantity: number;
+    barkod: string;
+    miktar: number;
     timestamp: Date;
     isEdited?: boolean;
 }
 
 export interface BarcodeSession {
-    fiscNumber: string;
-    date: Date;
-    items: BarcodeItem[];
+    fisno: string;
+    tarih: string;
+    cari_kodu: string;
+    cari_isim: string;
+    details: BarcodeItem[];
     isPending?: boolean;
-    cari?: {
-        cari_kodu: string;
-        cari_isim: string;
-    };
 }
 
 @Injectable({
@@ -45,14 +43,14 @@ export class BarcodeService {
         this.loadCurrentSession();
     }
 
-    getInitialReceiptDetails(): Observable<{ fiscNumber: string, date: string }> {
+    getInitialReceiptDetails(): Observable<{ fisno: string, tarih: string }> {
         // 1. Aktif bir oturum var mı?
         const currentSession = this.currentSessionSubject.value;
         if (currentSession) {
             // Varsa onu döndür
             return of({
-                fiscNumber: currentSession.fiscNumber,
-                date: new Date(currentSession.date).toISOString().split('T')[0]
+                fisno: currentSession.fisno,
+                tarih: currentSession.tarih
             });
         }
 
@@ -62,17 +60,29 @@ export class BarcodeService {
                 // Tarih formatını DD.MM.YYYY -> YYYY-MM-DD çevir
                 const [day, month, year] = response.tarih.split('.');
                 const formattedDate = `${year}-${month}-${day}`;
+
+                // Fiş numarası hesaplama: API'den gelen ile bekleyenlerdeki en büyük numarayı karşılaştır
+                let nextFisNo = parseInt(response.fisno) || 0;
+
+                const pendingSessions = this.pendingSessionsSubject.value;
+                if (pendingSessions.length > 0) {
+                    const maxPendingFisNo = Math.max(...pendingSessions.map(s => parseInt(s.fisno) || 0));
+                    if (maxPendingFisNo >= nextFisNo) {
+                        nextFisNo = maxPendingFisNo + 1;
+                    }
+                }
+
                 return {
-                    fiscNumber: response.fisno,
-                    date: formattedDate
+                    fisno: nextFisNo.toString(),
+                    tarih: formattedDate
                 };
             }),
             catchError(error => {
                 console.error('Fiş no alınamadı:', error);
                 // Hata durumunda boş/bugün döndür
                 return of({
-                    fiscNumber: '',
-                    date: new Date().toISOString().split('T')[0]
+                    fisno: '',
+                    tarih: new Date().toISOString().split('T')[0]
                 });
             })
         );
@@ -83,10 +93,29 @@ export class BarcodeService {
         const stored = localStorage.getItem('currentSession');
         if (stored) {
             try {
-                const session = JSON.parse(stored);
+                let session = JSON.parse(stored);
+
+                // Migration
+                if (session.items && !session.details) {
+                    session = {
+                        fisno: session.fiscNumber || session.fisno,
+                        tarih: session.date || session.tarih,
+                        cari_kodu: session.cari_kodu || '',
+                        cari_isim: session.cari_isim || '',
+                        details: session.items.map((i: any) => ({
+                            barkod: i.barcode || i.barkod,
+                            miktar: i.quantity || i.miktar,
+                            timestamp: i.timestamp,
+                            isEdited: i.isEdited
+                        })),
+                        isPending: session.isPending
+                    };
+                }
+
                 this.currentSessionSubject.next(session);
             } catch (error) {
                 console.error('Error loading current session:', error);
+                localStorage.removeItem('currentSession');
             }
         }
     }
@@ -101,12 +130,13 @@ export class BarcodeService {
         }
     }
 
-    startNewSession(fiscNumber: string, date: Date, cari?: { cari_kodu: string, cari_isim: string }): void {
+    startNewSession(fisno: string, tarih: string, cari?: { cari_kodu: string, cari_isim: string }): void {
         const session: BarcodeSession = {
-            fiscNumber,
-            date,
-            items: [],
-            cari
+            fisno,
+            tarih,
+            details: [],
+            cari_kodu: cari?.cari_kodu || '',
+            cari_isim: cari?.cari_isim || ''
         };
         this.currentSessionSubject.next(session);
         this.saveCurrentSession();
@@ -115,28 +145,29 @@ export class BarcodeService {
     updateSessionCari(cari: { cari_kodu: string, cari_isim: string }): void {
         const session = this.currentSessionSubject.value;
         if (session) {
-            session.cari = cari;
+            session.cari_kodu = cari.cari_kodu;
+            session.cari_isim = cari.cari_isim;
             this.currentSessionSubject.next({ ...session });
             this.saveCurrentSession();
         }
     }
 
-    addBarcode(barcode: string, quantity: number = 1): void {
+    addBarcode(barkod: string, miktar: number = 1): void {
         const session = this.currentSessionSubject.value;
         if (!session) {
             console.warn('No active session');
             return;
         }
 
-        const existingItem = session.items.find(item => item.barcode === barcode);
+        const existingItem = session.details.find(item => item.barkod === barkod);
 
         if (existingItem) {
-            existingItem.quantity += quantity;
+            existingItem.miktar += miktar;
             existingItem.timestamp = new Date();
         } else {
-            session.items.push({
-                barcode,
-                quantity,
+            session.details.push({
+                barkod,
+                miktar,
                 timestamp: new Date()
             });
         }
@@ -145,24 +176,24 @@ export class BarcodeService {
         this.saveCurrentSession();
     }
 
-    updateBarcodeQuantity(barcode: string, quantity: number): void {
+    updateBarcodeQuantity(barkod: string, miktar: number): void {
         const session = this.currentSessionSubject.value;
         if (!session) return;
 
-        const item = session.items.find(i => i.barcode === barcode);
+        const item = session.details.find(i => i.barkod === barkod);
         if (item) {
-            item.quantity = quantity;
+            item.miktar = miktar;
             item.isEdited = true;
             this.currentSessionSubject.next({ ...session });
             this.saveCurrentSession();
         }
     }
 
-    removeBarcode(barcode: string): void {
+    removeBarcode(barkod: string): void {
         const session = this.currentSessionSubject.value;
         if (!session) return;
 
-        session.items = session.items.filter(item => item.barcode !== barcode);
+        session.details = session.details.filter(item => item.barkod !== barkod);
         this.currentSessionSubject.next({ ...session });
         this.saveCurrentSession();
     }
@@ -174,7 +205,7 @@ export class BarcodeService {
 
     saveToPending(): void {
         const session = this.currentSessionSubject.value;
-        if (!session || session.items.length === 0) return;
+        if (!session || session.details.length === 0) return;
 
         session.isPending = true;
         const pending = this.pendingSessionsSubject.value;
@@ -195,27 +226,51 @@ export class BarcodeService {
         const stored = localStorage.getItem('pendingSessions');
         if (stored) {
             try {
-                const sessions = JSON.parse(stored);
+                let sessions = JSON.parse(stored);
+
+                // Migration: Old format to New format
+                sessions = sessions.map((s: any) => {
+                    if (s.items && !s.details) {
+                        return {
+                            fisno: s.fiscNumber || s.fisno,
+                            tarih: s.date || s.tarih,
+                            cari_kodu: s.cari_kodu || '',
+                            cari_isim: s.cari_isim || '',
+                            details: s.items.map((i: any) => ({
+                                barkod: i.barcode || i.barkod,
+                                miktar: i.quantity || i.miktar,
+                                timestamp: i.timestamp,
+                                isEdited: i.isEdited
+                            })),
+                            isPending: s.isPending
+                        };
+                    }
+                    return s;
+                });
+
                 this.pendingSessionsSubject.next(sessions);
             } catch (error) {
                 console.error('Error loading pending sessions:', error);
+                // Hata durumunda local storage'ı temizle ki uygulama çökmesin
+                localStorage.removeItem('pendingSessions');
+                this.pendingSessionsSubject.next([]);
             }
         }
     }
 
-    getPendingSession(fiscNumber: string): BarcodeSession | undefined {
-        return this.pendingSessionsSubject.value.find(s => s.fiscNumber === fiscNumber);
+    getPendingSession(fisno: string): BarcodeSession | undefined {
+        return this.pendingSessionsSubject.value.find(s => s.fisno === fisno);
     }
 
     resumeSession(session: BarcodeSession): void {
-        this.removePendingSession(session.fiscNumber);
+        this.removePendingSession(session.fisno);
         this.currentSessionSubject.next({ ...session, isPending: false });
         this.saveCurrentSession();
     }
 
-    removePendingSession(fiscNumber: string): void {
+    removePendingSession(fisno: string): void {
         const pending = this.pendingSessionsSubject.value.filter(
-            s => s.fiscNumber !== fiscNumber
+            s => s.fisno !== fisno
         );
         this.pendingSessionsSubject.next(pending);
         if (this.isBrowser) {
@@ -247,10 +302,32 @@ export class BarcodeService {
         const stored = localStorage.getItem('sentSessions');
         if (stored) {
             try {
-                const sessions = JSON.parse(stored);
+                let sessions = JSON.parse(stored);
+
+                // Migration
+                sessions = sessions.map((s: any) => {
+                    if (s.items && !s.details) {
+                        return {
+                            fisno: s.fiscNumber || s.fisno,
+                            tarih: s.date || s.tarih,
+                            cari_kodu: s.cari_kodu || '',
+                            cari_isim: s.cari_isim || '',
+                            details: s.items.map((i: any) => ({
+                                barkod: i.barcode || i.barkod,
+                                miktar: i.quantity || i.miktar,
+                                timestamp: i.timestamp,
+                                isEdited: i.isEdited
+                            })),
+                            isPending: s.isPending
+                        };
+                    }
+                    return s;
+                });
+
                 this.sentSessionsSubject.next(sessions);
             } catch (error) {
                 console.error('Error loading sent sessions:', error);
+                localStorage.removeItem('sentSessions');
             }
         }
     }

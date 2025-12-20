@@ -17,8 +17,18 @@ export const routes: Routes = [
         canActivate: [authGuard]
     },
     {
+        path: 'history/:id',
+        loadComponent: () => import('./components/history-detail/history-detail.component').then(m => m.HistoryDetailComponent),
+        canActivate: [authGuard]
+    },
+    {
         path: 'pending',
         loadComponent: () => import('./components/pending/pending.component').then(m => m.PendingComponent),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'pending/:fisno',
+        loadComponent: () => import('./components/pending-detail/pending-detail.component').then(m => m.PendingDetailComponent),
         canActivate: [authGuard]
     },
     {

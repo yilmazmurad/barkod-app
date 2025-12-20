@@ -5,6 +5,39 @@ import { catchError } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment.development';
 
+export interface HistoryDetailItem {
+    okumadetay_id: number;
+    okuma_id: number;
+    sirano: number;
+    barkod: string;
+    stok_kodu: string;
+    stok_adi: string;
+    miktar: number;
+    fiyat: number;
+    tutar: number;
+    is_bulundu: boolean;
+    is_aktarildi: boolean;
+    is_new: boolean;
+    is_deleted: boolean;
+}
+
+export interface HistoryDetail {
+    okuma_id: number;
+    fisno: number;
+    tarih: string;
+    cari_kodu: string;
+    cari_isim: string;
+    user_id: number;
+    username: string;
+    is_aktarildi: string;
+    toplam_adet: number;
+    toplam_tutar: number;
+    is_new: boolean;
+    mikro_fisno: number;
+    mikro_fisseri: string;
+    details: HistoryDetailItem[];
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -32,6 +65,20 @@ export class ApiService {
         return this.post<any[]>('stok/carisearch', {
             search_field: searchField,
             search_string: searchString
+        });
+    }
+
+    getHistory(page: number, pageSize: number, filters: any = {}): Observable<any[]> {
+        return this.post<any[]>('stok/okumafisiliste', {
+            sayfano: page,
+            satirsayi: pageSize,
+            ...filters
+        });
+    }
+
+    getHistoryDetail(okumaId: number): Observable<HistoryDetail> {
+        return this.post<HistoryDetail>('stok/okumafisigetir', {
+            okuma_id: okumaId
         });
     }
 

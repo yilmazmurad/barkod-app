@@ -17,9 +17,9 @@ import { Subject, debounceTime } from 'rxjs';
 export class BarcodeScanComponent implements OnInit, OnDestroy {
     @ViewChild('barcodeInput') barcodeInput!: ElementRef<HTMLInputElement>;
 
-    fiscNumber = '';
+    fisno = '';
     date = new Date().toISOString().split('T')[0];
-    items: BarcodeItem[] = [];
+    details: BarcodeItem[] = [];
     currentSession: any = null;
 
     // Cari Seçimi
@@ -58,15 +58,15 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
         this.barcodeService.currentSession$.subscribe(session => {
             this.currentSession = session;
             if (session) {
-                this.fiscNumber = session.fiscNumber;
-                this.date = new Date(session.date).toISOString().split('T')[0];
-                this.selectedCari = session.cari || null;
+                this.fisno = session.fisno;
+                this.date = session.tarih;
+                this.selectedCari = session.cari_kodu ? { cari_kodu: session.cari_kodu, cari_isim: session.cari_isim } : null;
                 // Son eklenen en üstte olacak şekilde sırala (Tarihe göre azalan)
-                this.items = [...session.items].sort((a, b) => {
+                this.details = [...session.details].sort((a, b) => {
                     return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
                 });
             } else {
-                this.items = [];
+                this.details = [];
             }
         });
 
@@ -78,8 +78,8 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
         this.barcodeService.getInitialReceiptDetails().subscribe(details => {
             // Eğer aktif session yoksa, API'den gelen değerleri kullan
             if (!this.currentSession) {
-                this.fiscNumber = details.fiscNumber;
-                this.date = details.date;
+                this.fisno = details.fisno;
+                this.date = details.tarih;
             }
         });
     }
@@ -122,24 +122,24 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
 
         // Session yoksa oluştur
         if (!this.currentSession) {
-            if (!this.fiscNumber) {
+            if (!this.fisno) {
                 alert('Lütfen fiş numarası girin!');
                 return;
             }
-            this.barcodeService.startNewSession(this.fiscNumber, new Date(this.date), this.selectedCari || undefined);
+            this.barcodeService.startNewSession(this.fisno, this.date, this.selectedCari || undefined);
         }
 
         this.barcodeService.addBarcode(barcode, 1);
     }
 
     startSession(): void {
-        if (!this.fiscNumber.trim()) {
+        if (!this.fisno.trim()) {
             alert('Lütfen fiş numarası girin!');
             return;
         }
 
         // Bekleyenlerde var mı kontrol et
-        const pendingSession = this.barcodeService.getPendingSession(this.fiscNumber);
+        const pendingSession = this.barcodeService.getPendingSession(this.fisno);
         if (pendingSession) {
             if (confirm('Bu fiş numarası bekleyenler listesinde bulundu. Kaldığınız yerden devam etmek ister misiniz?')) {
                 this.barcodeService.resumeSession(pendingSession);
@@ -148,7 +148,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
             }
         }
 
-        this.barcodeService.startNewSession(this.fiscNumber, new Date(this.date), this.selectedCari || undefined);
+        this.barcodeService.startNewSession(this.fisno, this.date, this.selectedCari || undefined);
         setTimeout(() => this.focusBarcodeInput(), 100);
     }
 
@@ -167,11 +167,11 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
 
         // Session yoksa oluştur
         if (!this.currentSession) {
-            if (!this.fiscNumber.trim()) {
+            if (!this.fisno.trim()) {
                 alert('Lütfen önce fiş numarası girin!');
                 return;
             }
-            this.barcodeService.startNewSession(this.fiscNumber, new Date(this.date), this.selectedCari || undefined);
+            this.barcodeService.startNewSession(this.fisno, this.date, this.selectedCari || undefined);
         }
 
         this.barcodeService.addBarcode(this.manualBarcode.trim(), this.manualQuantity);
@@ -189,9 +189,9 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     }
 
     editQuantity(item: BarcodeItem): void {
-        this.editingBarcode = item.barcode;
-        this.editingQuantity = item.quantity;
-        this.editingBarcodeValue = item.barcode;
+        this.editingBarcode = item.barkod;
+        this.editingQuantity = item.miktar;
+        this.editingBarcodeValue = item.barkod;
     }
 
     saveQuantity(oldBarcode: string): void {
@@ -215,16 +215,16 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     }
 
     increaseQuantity(barcode: string): void {
-        const item = this.items.find(i => i.barcode === barcode);
+        const item = this.details.find(i => i.barkod === barcode);
         if (item) {
-            this.barcodeService.updateBarcodeQuantity(barcode, item.quantity + 1);
+            this.barcodeService.updateBarcodeQuantity(barcode, item.miktar + 1);
         }
     }
 
     decreaseQuantity(barcode: string): void {
-        const item = this.items.find(i => i.barcode === barcode);
-        if (item && item.quantity > 1) {
-            this.barcodeService.updateBarcodeQuantity(barcode, item.quantity - 1);
+        const item = this.details.find(i => i.barkod === barcode);
+        if (item && item.miktar > 1) {
+            this.barcodeService.updateBarcodeQuantity(barcode, item.miktar - 1);
         }
     }
 
@@ -243,7 +243,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     }
 
     saveToPending(): void {
-        if (this.items.length === 0) {
+        if (this.details.length === 0) {
             alert('Liste boş!');
             return;
         }
@@ -253,16 +253,16 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     }
 
     sendToApi(): void {
-        if (this.items.length === 0) {
+        if (this.details.length === 0) {
             alert('Liste boş!');
             return;
         }
 
         // Session'ı oluştur
         const session: any = {
-            fiscNumber: this.fiscNumber,
-            date: new Date(this.date),
-            items: this.items
+            fisno: this.fisno,
+            tarih: this.date,
+            details: this.details
         };
 
         // Sent listesine kaydet

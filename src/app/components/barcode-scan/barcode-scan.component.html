@@ -15,7 +15,7 @@
                 <div class="flex gap-3 items-end mb-3">
                     <div class="flex-1">
                         <label class="block text-xs font-medium text-gray-500 mb-1.5 ml-1">Fiş No</label>
-                        <input type="text" [(ngModel)]="fiscNumber" [disabled]="currentSession !== null"
+                        <input type="text" [(ngModel)]="fisno" [disabled]="currentSession !== null"
                             class="w-full px-3 py-2 text-sm border border-gray-200 bg-gray-50 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                             placeholder="Fiş No" />
                     </div>
@@ -112,22 +112,22 @@
                     </div>
                     <div>
                         <h2 class="text-base font-bold text-gray-900">Okutulan Barkodlar</h2>
-                        <p class="text-xs text-gray-500 mt-0.5">Toplam {{ items.length }} adet ürün</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Toplam {{ details.length }} adet ürün</p>
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <button (click)="saveToPending()" [disabled]="items.length === 0"
+                    <button (click)="saveToPending()" [disabled]="details.length === 0"
                         class="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 shadow-sm shadow-amber-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none transition-all active:scale-95">
                         Kaydet
                     </button>
-                    <button (click)="sendToApi()" [disabled]="items.length === 0"
+                    <button (click)="sendToApi()" [disabled]="details.length === 0"
                         class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 shadow-sm shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none transition-all active:scale-95">
                         Gönder
                     </button>
                 </div>
             </div>
 
-            @if (items.length === 0) {
+            @if (details.length === 0) {
             <div class="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50/30">
                 <div class="bg-white p-6 rounded-full shadow-sm mb-4">
                     <svg class="h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,17 +165,16 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-50">
-                        @for (item of items; track item.barcode; let i = $index) {
+                        @for (item of details; track item.barkod; let i = $index) {
                         <tr [class.bg-amber-50]="item.isEdited" class="hover:bg-gray-50 transition-colors group">
                             <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-400 font-mono">
-                                {{ items.length - i }}
+                                {{ details.length - i }}
                             </td>
                             <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                                @if (editingBarcode === item.barcode) {
+                                @if (editingBarcode === item.barkod) {
                                 <input type="text" [(ngModel)]="editingBarcodeValue"
                                     class="w-full px-3 py-1.5 border border-blue-500 rounded-lg focus:outline-none shadow-sm bg-white"
-                                    (keyup.enter)="saveQuantity(item.barcode)" (keyup.escape)="cancelEdit()"
-                                    autoFocus />
+                                    (keyup.enter)="saveQuantity(item.barkod)" (keyup.escape)="cancelEdit()" autoFocus />
                                 } @else {
                                 <div class="flex items-center gap-2 cursor-pointer hover:text-blue-600 transition-colors"
                                     (click)="editQuantity(item)">
@@ -185,18 +184,18 @@
                                             d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z">
                                         </path>
                                     </svg>
-                                    <span class="font-mono text-base">{{ item.barcode }}</span>
+                                    <span class="font-mono text-base">{{ item.barkod }}</span>
                                 </div>
                                 }
                             </td>
                             <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                                 <div class="flex items-center justify-center gap-2">
-                                    @if (editingBarcode === item.barcode) {
+                                    @if (editingBarcode === item.barkod) {
                                     <input type="number" [(ngModel)]="editingQuantity" min="1"
                                         class="w-24 px-2 py-1.5 border border-blue-500 rounded-lg focus:outline-none shadow-sm text-center font-bold text-lg"
-                                        (keyup.enter)="saveQuantity(item.barcode)" (keyup.escape)="cancelEdit()" />
+                                        (keyup.enter)="saveQuantity(item.barkod)" (keyup.escape)="cancelEdit()" />
                                     } @else {
-                                    <button (click)="decreaseQuantity(item.barcode)" [disabled]="item.quantity <= 1"
+                                    <button (click)="decreaseQuantity(item.barkod)" [disabled]="item.miktar <= 1"
                                         class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-90">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -206,9 +205,9 @@
                                     <span
                                         class="font-bold text-lg min-w-[3rem] text-center cursor-pointer hover:text-blue-600 select-none bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100"
                                         (click)="editQuantity(item)">
-                                        {{ item.quantity }}
+                                        {{ item.miktar }}
                                     </span>
-                                    <button (click)="increaseQuantity(item.barcode)"
+                                    <button (click)="increaseQuantity(item.barkod)"
                                         class="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition-all active:scale-90">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -229,9 +228,9 @@
                                 </div>
                             </td>
                             <td class="px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
-                                @if (editingBarcode === item.barcode) {
+                                @if (editingBarcode === item.barkod) {
                                 <div class="flex justify-end gap-2">
-                                    <button (click)="saveQuantity(item.barcode)"
+                                    <button (click)="saveQuantity(item.barkod)"
                                         class="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
                                         title="Kaydet (Enter)">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,7 +259,7 @@
                                             </path>
                                         </svg>
                                     </button>
-                                    <button (click)="removeItem(item.barcode)"
+                                    <button (click)="removeItem(item.barkod)"
                                         class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                         title="Sil">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

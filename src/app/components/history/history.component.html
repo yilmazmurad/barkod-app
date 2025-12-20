@@ -1,24 +1,27 @@
 <div class="min-h-screen bg-gray-50 font-sans text-gray-900">
-    <!-- Navbar moved to AppComponent -->
-
     <!-- Main Content -->
     <div class="w-full h-[calc(100vh-4rem)] flex flex-col p-4 gap-4">
 
         <div class="flex justify-between items-center shrink-0">
             <div class="flex items-center gap-2">
-                <h2 class="text-lg font-bold text-gray-900">Gönderilen Fişler</h2>
-                <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{
-                    sentSessions.length }} adet</span>
+                <h2 class="text-lg font-bold text-gray-900">Geçmiş Fişler</h2>
+                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{
+                    filteredHistoryItems.length }} kayıt</span>
             </div>
-            @if (sentSessions.length > 0) {
-            <button (click)="clearAllHistory()"
-                class="px-4 py-2 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 transition-colors">
-                Geçmişi Temizle
-            </button>
-            }
+            <div class="relative">
+                <input type="text" [(ngModel)]="filters.genel_arama" (ngModelChange)="onFilterChange()"
+                    placeholder="Genel arama..."
+                    class="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 w-64">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+            </div>
         </div>
 
-        @if (sentSessions.length === 0) {
+        @if (historyItems.length === 0 && !isLoading) {
         <div
             class="flex-1 flex flex-col items-center justify-center text-gray-400 bg-white rounded-xl border border-gray-100 shadow-sm">
             <div class="bg-gray-50 p-6 rounded-full shadow-sm mb-4">
@@ -28,55 +31,115 @@
                 </svg>
             </div>
             <h3 class="text-lg font-medium text-gray-600">Kayıt yok</h3>
-            <p class="text-sm text-gray-400 mt-1">Henüz gönderilmiş fiş bulunmuyor.</p>
+            <p class="text-sm text-gray-400 mt-1">Henüz geçmiş fiş bulunmuyor.</p>
         </div>
         } @else {
-        <div class="flex-1 overflow-auto bg-white rounded-xl border border-gray-100 shadow-sm">
-            <table class="min-w-full divide-y divide-gray-100">
-                <thead class="bg-gray-50/80 backdrop-blur-sm sticky top-0 z-10">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                            Fiş No
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                            Tarih
-                        </th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                            Ürün Sayısı
-                        </th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                            Toplam Miktar
-                        </th>
-                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
-                            Durum
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-50">
-                    @for (session of sentSessions; track session.fiscNumber) {
-                    <tr class="hover:bg-green-50/30 transition-colors group">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {{ session.fiscNumber }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ session.date | date:'dd.MM.yyyy' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">
-                            {{ session.items.length }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
-                            {{ getTotalQuantity(session) }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Gönderildi
-                            </span>
-                        </td>
-                    </tr>
+        <div class="flex-1 overflow-auto bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col">
+            <div class="flex-1 overflow-auto">
+                <table class="min-w-full divide-y divide-gray-100">
+                    <thead class="bg-gray-50/80 backdrop-blur-sm sticky top-0 z-10">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                Fiş No
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                Tarih
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                Cari Kodu
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                Cari Adı
+                            </th>
+                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                Toplam Adet
+                            </th>
+                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                Toplam Tutar
+                            </th>
+                            <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                Durum
+                            </th>
+                        </tr>
+                        <tr class="bg-gray-50 border-b border-gray-200">
+                            <th class="px-2 py-2">
+                                <input type="text" [(ngModel)]="filters.fisno" (ngModelChange)="onFilterChange()"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Ara...">
+                            </th>
+                            <th class="px-2 py-2">
+                                <input type="date" [(ngModel)]="filters.tarih" (ngModelChange)="onFilterChange()"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500">
+                            </th>
+                            <th class="px-2 py-2">
+                                <input type="text" [(ngModel)]="filters.cari_kodu" (ngModelChange)="onFilterChange()"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Kod ara...">
+                            </th>
+                            <th class="px-2 py-2">
+                                <input type="text" [(ngModel)]="filters.cari_isim" (ngModelChange)="onFilterChange()"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="İsim ara...">
+                            </th>
+                            <th class="px-2 py-2"></th>
+                            <th class="px-2 py-2"></th>
+                            <th class="px-2 py-2"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-50">
+                        @for (item of filteredHistoryItems; track item.okuma_id) {
+                        <tr (click)="viewDetail(item)"
+                            class="hover:bg-blue-50/30 transition-colors cursor-pointer group">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ item.fisno }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ item.tarih | date:'dd.MM.yyyy' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ item.cari_kodu }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                                {{ item.cari_isim || '-' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
+                                {{ item.toplam_adet }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
+                                {{ item.toplam_tutar | currency:'TRY':'symbol-narrow':'1.2-2' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                    [ngClass]="item.is_aktarildi === 'E' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'">
+                                    {{ item.is_aktarildi === 'E' ? 'Aktarıldı' : 'Bekliyor' }}
+                                </span>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (hasMore) {
+            <div class="p-4 border-t border-gray-100 flex justify-center bg-gray-50">
+                <button (click)="loadMore()" [disabled]="isLoading"
+                    class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    @if (isLoading) {
+                    <svg class="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    Yükleniyor...
+                    } @else {
+                    Daha Fazla Yükle
                     }
-                </tbody>
-            </table>
+                </button>
+            </div>
+            }
         </div>
         }
     </div>

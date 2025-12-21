@@ -5,12 +5,14 @@ import { Router } from '@angular/router';
 import { BarcodeService, BarcodeItem } from '../../services/barcode.service';
 import { AuthService } from '../../services/auth.service';
 import { CariSearchComponent } from '../cari-search/cari-search.component';
+import { StokSearchComponent } from '../stok-search/stok-search.component';
+import { DialogService } from '../../services/dialog.service';
 import { Subject, debounceTime } from 'rxjs';
 
 @Component({
     selector: 'app-barcode-scan',
     standalone: true,
-    imports: [CommonModule, FormsModule, CariSearchComponent],
+    imports: [CommonModule, FormsModule, CariSearchComponent, StokSearchComponent],
     templateUrl: './barcode-scan.component.html',
     styleUrls: ['./barcode-scan.component.css']
 })
@@ -25,6 +27,9 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     // Cari Seçimi
     showCariModal = false;
     selectedCari: { cari_kodu: string, cari_isim: string } | null = null;
+
+    // Stok Arama
+    showStockModal = false;
 
     // Barkod okuma için
     private barcodeBuffer = '';
@@ -43,7 +48,8 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     constructor(
         public barcodeService: BarcodeService,
         public authService: AuthService,
-        private router: Router
+        private router: Router,
+        private dialogService: DialogService
     ) {
         // Debounce ile barkod okumayı optimize et
         this.barcodeSubject.pipe(
@@ -123,7 +129,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
         // Session yoksa oluştur
         if (!this.currentSession) {
             if (!this.fisno) {
-                alert('Lütfen fiş numarası girin!');
+                this.dialogService.alert('Uyarı', 'Lütfen fiş numarası girin!', 'warning');
                 return;
             }
             this.barcodeService.startNewSession(this.fisno, this.date, this.selectedCari || undefined);
@@ -132,16 +138,20 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
         this.barcodeService.addBarcode(barcode, 1);
     }
 
-    startSession(): void {
+    async startSession(): Promise<void> {
         if (!this.fisno.trim()) {
-            alert('Lütfen fiş numarası girin!');
+            this.dialogService.alert('Uyarı', 'Lütfen fiş numarası girin!', 'warning');
             return;
         }
 
         // Bekleyenlerde var mı kontrol et
         const pendingSession = this.barcodeService.getPendingSession(this.fisno);
         if (pendingSession) {
-            if (confirm('Bu fiş numarası bekleyenler listesinde bulundu. Kaldığınız yerden devam etmek ister misiniz?')) {
+            const confirmed = await this.dialogService.confirm(
+                'Devam Et',
+                'Bu fiş numarası bekleyenler listesinde bulundu. Kaldığınız yerden devam etmek ister misiniz?'
+            );
+            if (confirmed) {
                 this.barcodeService.resumeSession(pendingSession);
                 setTimeout(() => this.focusBarcodeInput(), 100);
                 return;
@@ -154,13 +164,13 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
 
     addManualBarcode(): void {
         if (!this.manualBarcode.trim()) {
-            alert('Lütfen barkod girin!');
+            this.dialogService.alert('Uyarı', 'Lütfen barkod girin!', 'warning');
             this.focusBarcodeInput();
             return;
         }
 
         if (this.manualQuantity < 1) {
-            alert('Miktar en az 1 olmalıdır!');
+            this.dialogService.alert('Uyarı', 'Miktar en az 1 olmalıdır!', 'warning');
             this.focusBarcodeInput();
             return;
         }
@@ -168,7 +178,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
         // Session yoksa oluştur
         if (!this.currentSession) {
             if (!this.fisno.trim()) {
-                alert('Lütfen önce fiş numarası girin!');
+                this.dialogService.alert('Uyarı', 'Lütfen önce fiş numarası girin!', 'warning');
                 return;
             }
             this.barcodeService.startNewSession(this.fisno, this.date, this.selectedCari || undefined);
@@ -192,6 +202,27 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
         this.editingBarcode = item.barkod;
         this.editingQuantity = item.miktar;
         this.editingBarcodeValue = item.barkod;
+    }
+
+    // Stok Arama Metodları
+    openStockModal() {
+        this.showStockModal = true;
+    }
+
+    closeStockModal() {
+        this.showStockModal = false;
+        setTimeout(() => this.focusBarcodeInput(), 100);
+    }
+
+    onStockSelected(stock: { stok_kodu: string, stok_adi: string, barkodu: string }) {
+        if (stock.barkodu) {
+            this.barcodeService.addBarcode(stock.barkodu, 1);
+        } else {
+            // Barkodu yoksa stok kodunu barkod olarak kullanabiliriz veya uyarı verebiliriz
+            // Şimdilik stok kodunu kullanıyoruz
+            this.barcodeService.addBarcode(stock.stok_kodu, 1);
+        }
+        this.closeStockModal();
     }
 
     saveQuantity(oldBarcode: string): void {
@@ -228,15 +259,27 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
         }
     }
 
-    removeItem(barcode: string): void {
-        if (confirm('Bu barkodu silmek istediğinize emin misiniz?')) {
+    async removeItem(barcode: string): Promise<void> {
+        const confirmed = await this.dialogService.confirm(
+            'Silme Onayı',
+            'Bu barkodu silmek istediğinize emin misiniz?',
+            'Sil',
+            'İptal'
+        );
+        if (confirmed) {
             this.barcodeService.removeBarcode(barcode);
             setTimeout(() => this.focusBarcodeInput(), 100);
         }
     }
 
-    clearAll(): void {
-        if (confirm('Tüm listeyi temizlemek istediğinize emin misiniz?')) {
+    async clearAll(): Promise<void> {
+        const confirmed = await this.dialogService.confirm(
+            'Temizleme Onayı',
+            'Tüm listeyi temizlemek istediğinize emin misiniz?',
+            'Temizle',
+            'İptal'
+        );
+        if (confirmed) {
             this.barcodeService.clearSession();
             this.loadNewReceiptDetails();
         }
@@ -244,17 +287,17 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
 
     saveToPending(): void {
         if (this.details.length === 0) {
-            alert('Liste boş!');
+            this.dialogService.alert('Uyarı', 'Liste boş!', 'warning');
             return;
         }
         this.barcodeService.saveToPending();
-        alert('Fiş bekleyenler listesine kaydedildi. Yeni fiş girişi yapabilirsiniz.');
+        this.dialogService.alert('Başarılı', 'Fiş bekleyenler listesine kaydedildi. Yeni fiş girişi yapabilirsiniz.', 'success');
         this.loadNewReceiptDetails();
     }
 
     sendToApi(): void {
         if (this.details.length === 0) {
-            alert('Liste boş!');
+            this.dialogService.alert('Uyarı', 'Liste boş!', 'warning');
             return;
         }
 
@@ -271,7 +314,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
         // TODO: API'ye gönder
         console.log('API\'ye gönderilecek:', session);
 
-        alert('Başarıyla gönderildi ve geçmişe kaydedildi!');
+        this.dialogService.alert('Başarılı', 'Başarıyla gönderildi ve geçmişe kaydedildi!', 'success');
         this.barcodeService.clearSession();
         this.loadNewReceiptDetails();
     }

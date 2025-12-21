@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService, HistoryDetail } from '../../services/api.service';
 import { BarcodeService } from '../../services/barcode.service';
+import { ExcelService } from '../../services/excel.service';
+import { DialogService } from '../../services/dialog.service';
 
 @Component({
     selector: 'app-history-detail',
@@ -20,7 +22,9 @@ export class HistoryDetailComponent implements OnInit {
         private route: ActivatedRoute,
         private router: Router,
         private apiService: ApiService,
-        private barcodeService: BarcodeService
+        private barcodeService: BarcodeService,
+        private excelService: ExcelService,
+        private dialogService: DialogService
     ) { }
 
     ngOnInit(): void {
@@ -52,10 +56,15 @@ export class HistoryDetailComponent implements OnInit {
         this.router.navigate(['/history']);
     }
 
-    editReceipt(): void {
+    async editReceipt(): Promise<void> {
         if (!this.detail) return;
 
-        if (confirm('Bu fişi düzenlemek için yeni bir oturum başlatılacak. Onaylıyor musunuz?')) {
+        const confirmed = await this.dialogService.confirm(
+            'Düzenleme Onayı',
+            'Bu fişi düzenlemek için yeni bir oturum başlatılacak. Onaylıyor musunuz?'
+        );
+
+        if (confirmed) {
             // Yeni oturum başlat
             this.barcodeService.startNewSession(
                 this.detail.fisno.toString(),
@@ -74,5 +83,30 @@ export class HistoryDetailComponent implements OnInit {
             // Scan sayfasına git
             this.router.navigate(['/scan']);
         }
+    }
+
+    exportToExcel(): void {
+        if (!this.detail || !this.detail.details) return;
+
+        const summary = [
+            { label: 'Fiş No', value: this.detail.fisno },
+            { label: 'Tarih', value: new Date(this.detail.tarih).toLocaleString() },
+            { label: 'Cari Kodu', value: this.detail.cari_kodu || '-' },
+            { label: 'Cari Adı', value: this.detail.cari_isim || '-' },
+            { label: 'Kullanıcı', value: this.detail.username || '-' },
+            { label: 'Toplam Adet', value: this.detail.toplam_adet },
+            { label: 'Toplam Tutar', value: this.detail.toplam_tutar }
+        ];
+
+        const columns = [
+            { header: 'Barkod', field: 'barkod', type: 'text' as const },
+            { header: 'Ürün Adı', field: 'stok_adi', format: (row: any) => row.stok_adi || '-' },
+            { header: 'Miktar', field: 'miktar' },
+            { header: 'Birim Fiyat', field: 'fiyat' },
+            { header: 'Tutar', field: 'tutar' }
+        ];
+
+        const fileName = `Fis_Detay_${this.detail.fisno}_${new Date().toISOString().split('T')[0]}`;
+        this.excelService.exportToCsv(this.detail.details, fileName, columns, summary);
     }
 }

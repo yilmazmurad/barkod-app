@@ -6,6 +6,7 @@ import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
+import { ExcelService } from '../../services/excel.service';
 
 export interface HistoryItem {
     okuma_id: number;
@@ -42,6 +43,7 @@ export class HistoryComponent implements OnInit {
         tarih: '',
         cari_kodu: '',
         cari_isim: '',
+        username: '',
         genel_arama: ''
     };
 
@@ -50,6 +52,7 @@ export class HistoryComponent implements OnInit {
     constructor(
         private apiService: ApiService,
         public authService: AuthService,
+        private excelService: ExcelService,
         private router: Router
     ) {
         this.searchSubject.pipe(
@@ -102,7 +105,8 @@ export class HistoryComponent implements OnInit {
             filtered = filtered.filter(item =>
                 item.fisno.toString().includes(searchLower) ||
                 (item.cari_isim && item.cari_isim.toLowerCase().includes(searchLower)) ||
-                (item.cari_kodu && item.cari_kodu.toLowerCase().includes(searchLower))
+                (item.cari_kodu && item.cari_kodu.toLowerCase().includes(searchLower)) ||
+                (item.username && item.username.toLowerCase().includes(searchLower))
             );
         }
 
@@ -129,6 +133,13 @@ export class HistoryComponent implements OnInit {
             );
         }
 
+        if (this.filters.username) {
+            const searchLower = this.filters.username.toLowerCase();
+            filtered = filtered.filter(item =>
+                item.username && item.username.toLowerCase().includes(searchLower)
+            );
+        }
+
         this.filteredHistoryItems = filtered;
     }
 
@@ -141,6 +152,21 @@ export class HistoryComponent implements OnInit {
 
     viewDetail(item: HistoryItem): void {
         this.router.navigate(['/history', item.okuma_id]);
+    }
+
+    exportToExcel(): void {
+        const columns = [
+            { header: 'Fiş No', field: 'fisno' },
+            { header: 'Tarih', field: 'tarih' },
+            { header: 'Cari Kodu', field: 'cari_kodu' },
+            { header: 'Cari Adı', field: 'cari_isim' },
+            { header: 'Kullanıcı', field: 'username' },
+            { header: 'Toplam Adet', field: 'toplam_adet' },
+            { header: 'Toplam Tutar', field: 'toplam_tutar' },
+            { header: 'Aktarıldı', field: 'is_aktarildi', format: (row: any) => row.is_aktarildi === 'E' ? 'Evet' : 'Hayır' }
+        ];
+
+        this.excelService.exportToCsv(this.filteredHistoryItems, 'gecmis-fisler', columns);
     }
 
     navigateToScan(): void {

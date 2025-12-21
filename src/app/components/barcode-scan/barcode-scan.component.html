@@ -61,7 +61,7 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 transition-shadow hover:shadow-md">
                 <div class="flex items-center gap-2 mb-3">
                     <div class="w-1 h-4 bg-purple-500 rounded-full"></div>
-                    <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wide">Manuel Giriş</h2>
+                    <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wide">Ürün Ekle</h2>
                 </div>
                 <div class="flex gap-3 items-end">
                     <div class="flex-[2]">
@@ -85,13 +85,23 @@
                         <input type="number" [(ngModel)]="manualQuantity" min="1"
                             class="w-full px-3 py-2 text-sm border border-gray-200 bg-gray-50 rounded-lg focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all outline-none" />
                     </div>
-                    <div>
+                    <div class="flex gap-2">
                         <button (click)="addManualBarcode()"
-                            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 shadow-sm shadow-purple-200 active:scale-95 transition-all duration-200">
+                            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 shadow-sm shadow-purple-200 active:scale-95 transition-all duration-200"
+                            title="Ekle">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 4v16m8-8H4"></path>
                             </svg>
+                        </button>
+                        <button (click)="openStockModal()"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm shadow-blue-200 active:scale-95 transition-all duration-200 flex items-center gap-2"
+                            title="Stok Ara">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            <span class="hidden xl:inline">Stok Ara</span>
                         </button>
                     </div>
                 </div>
@@ -294,6 +304,11 @@
         </div>
         <app-cari-search *ngIf="showCariModal" (cariSelected)="onCariSelected($event)"
             (close)="closeCariModal()"></app-cari-search>
+
+        <!-- Stok Arama Modalı -->
+        @if (showStockModal) {
+        <app-stok-search (stockSelected)="onStockSelected($event)" (close)="closeStockModal()"></app-stok-search>
+        }
 
     </div>
 </div>

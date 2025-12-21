@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { ApiService } from './api.service';
+import { AuthService } from './auth.service';
 
 export interface BarcodeItem {
     barkod: string;
@@ -16,6 +17,7 @@ export interface BarcodeSession {
     tarih: string;
     cari_kodu: string;
     cari_isim: string;
+    username?: string;
     details: BarcodeItem[];
     isPending?: boolean;
 }
@@ -36,7 +38,10 @@ export class BarcodeService {
     private platformId = inject(PLATFORM_ID);
     private isBrowser: boolean;
 
-    constructor(private apiService: ApiService) {
+    constructor(
+        private apiService: ApiService,
+        private authService: AuthService
+    ) {
         this.isBrowser = isPlatformBrowser(this.platformId);
         this.loadPendingSessions();
         this.loadSentSessions();
@@ -112,6 +117,10 @@ export class BarcodeService {
                     };
                 }
 
+                if (!session.username) {
+                    session.username = this.authService.currentUserValue?.username || '';
+                }
+
                 this.currentSessionSubject.next(session);
             } catch (error) {
                 console.error('Error loading current session:', error);
@@ -131,12 +140,14 @@ export class BarcodeService {
     }
 
     startNewSession(fisno: string, tarih: string, cari?: { cari_kodu: string, cari_isim: string }): void {
+        const user = this.authService.currentUserValue;
         const session: BarcodeSession = {
             fisno,
             tarih,
             details: [],
             cari_kodu: cari?.cari_kodu || '',
-            cari_isim: cari?.cari_isim || ''
+            cari_isim: cari?.cari_isim || '',
+            username: user?.username || ''
         };
         this.currentSessionSubject.next(session);
         this.saveCurrentSession();
@@ -207,6 +218,10 @@ export class BarcodeService {
         const session = this.currentSessionSubject.value;
         if (!session || session.details.length === 0) return;
 
+        if (!session.username) {
+            session.username = this.authService.currentUserValue?.username || '';
+        }
+
         session.isPending = true;
         const pending = this.pendingSessionsSubject.value;
         pending.push({ ...session });
@@ -245,6 +260,11 @@ export class BarcodeService {
                             isPending: s.isPending
                         };
                     }
+
+                    if (!s.username) {
+                        s.username = this.authService.currentUserValue?.username || '';
+                    }
+
                     return s;
                 });
 
@@ -337,5 +357,42 @@ export class BarcodeService {
         if (this.isBrowser) {
             localStorage.removeItem('sentSessions');
         }
+    }
+
+    sendSession(session: BarcodeSession): Observable<any> {
+        const user = this.authService.currentUserValue;
+
+        const requestData = {
+            okuma_id: 0,
+            fisno: 0,
+            tarih: session.tarih.includes('T') ? session.tarih : `${session.tarih}T00:00:00`,
+            cari_kodu: session.cari_kodu || "",
+            cari_isim: session.cari_isim || "",
+            user_id: 1,
+            username: user?.username || "",
+            is_aktarildi: "H",
+            toplam_adet: session.details.reduce((sum, item) => sum + item.miktar, 0),
+            toplam_tutar: 0,
+            is_new: true,
+            mikro_fisno: 0,
+            mikro_fisseri: "",
+            details: session.details.map((item, index) => ({
+                okumadetay_id: 0,
+                okuma_id: 0,
+                sirano: index + 1,
+                barkod: item.barkod,
+                stok_kodu: "",
+                stok_adi: "",
+                miktar: item.miktar,
+                fiyat: 0,
+                tutar: 0,
+                is_bulundu: false,
+                is_aktarildi: false,
+                is_new: true,
+                is_deleted: false
+            }))
+        };
+
+        return this.apiService.saveReceipt(requestData);
     }
 }

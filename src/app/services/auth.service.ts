@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
-import { environment } from '../../environments/environment.development';
+import { ConfigService } from './config.service';
 
 export interface User {
     username: string;
@@ -22,7 +22,8 @@ export class AuthService {
 
     constructor(
         private router: Router,
-        private http: HttpClient
+        private http: HttpClient,
+        private configService: ConfigService
     ) {
         this.isBrowser = isPlatformBrowser(this.platformId);
         let storedUser: string | null = null;
@@ -46,7 +47,7 @@ export class AuthService {
     }
 
     login(username: string, password: string): Observable<User> {
-        return this.http.post<any>(`${environment.apiUrl}/auth/login`, { username, password })
+        return this.http.post<any>(`${this.configService.getApiUrl()}/auth/login`, { username, password })
             .pipe(map(response => {
                 if (response.success) {
                     const user: User = {

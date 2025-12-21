@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AuthService } from './auth.service';
-import { environment } from '../../environments/environment.development';
+import { ConfigService } from './config.service';
 
 export interface HistoryDetailItem {
     okumadetay_id: number;
@@ -42,12 +42,16 @@ export interface HistoryDetail {
     providedIn: 'root'
 })
 export class ApiService {
-    private apiUrl = environment.apiUrl;
 
     constructor(
         private http: HttpClient,
-        private authService: AuthService
+        private authService: AuthService,
+        private configService: ConfigService
     ) { }
+
+    private get apiUrl(): string {
+        return this.configService.getApiUrl();
+    }
 
     private getHeaders(): HttpHeaders {
         const token = this.authService.token;
@@ -68,6 +72,13 @@ export class ApiService {
         });
     }
 
+    searchStock(searchField: 'stok_adi' | 'stok_kodu' | 'barkodu', searchString: string): Observable<any[]> {
+        return this.post<any[]>('stok/stoksearch', {
+            search_field: searchField,
+            search_string: searchString
+        });
+    }
+
     getHistory(page: number, pageSize: number, filters: any = {}): Observable<any[]> {
         return this.post<any[]>('stok/okumafisiliste', {
             sayfano: page,
@@ -80,6 +91,10 @@ export class ApiService {
         return this.post<HistoryDetail>('stok/okumafisigetir', {
             okuma_id: okumaId
         });
+    }
+
+    saveReceipt(data: any): Observable<HistoryDetail> {
+        return this.post<HistoryDetail>('stok/okumafisikaydet', data);
     }
 
     get<T>(endpoint: string): Observable<T> {

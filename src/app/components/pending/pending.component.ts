@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BarcodeService, BarcodeSession } from '../../services/barcode.service';
 import { AuthService } from '../../services/auth.service';
+import { ExcelService } from '../../services/excel.service';
+import { DialogService } from '../../services/dialog.service';
 
 @Component({
     selector: 'app-pending',
@@ -19,12 +21,15 @@ export class PendingComponent implements OnInit {
 
     filters = {
         fisno: '',
-        tarih: ''
+        tarih: '',
+        username: ''
     };
 
     constructor(
         public barcodeService: BarcodeService,
         public authService: AuthService,
+        private excelService: ExcelService,
+        private dialogService: DialogService,
         private router: Router
     ) { }
 
@@ -44,7 +49,8 @@ export class PendingComponent implements OnInit {
             filtered = filtered.filter(session =>
                 session.fisno.toLowerCase().includes(searchLower) ||
                 (session.cari_isim && session.cari_isim.toLowerCase().includes(searchLower)) ||
-                (session.cari_kodu && session.cari_kodu.toLowerCase().includes(searchLower))
+                (session.cari_kodu && session.cari_kodu.toLowerCase().includes(searchLower)) ||
+                (session.username && session.username.toLowerCase().includes(searchLower))
             );
         }
 
@@ -62,6 +68,13 @@ export class PendingComponent implements OnInit {
             filtered = filtered.filter(session => session.tarih.includes(this.filters.tarih));
         }
 
+        if (this.filters.username) {
+            const filterLower = this.filters.username.toLowerCase();
+            filtered = filtered.filter(session =>
+                session.username && session.username.toLowerCase().includes(filterLower)
+            );
+        }
+
         this.filteredSessions = filtered;
     }
 
@@ -69,8 +82,13 @@ export class PendingComponent implements OnInit {
         return session.details.reduce((sum, item) => sum + item.miktar, 0);
     }
 
-    loadSession(session: BarcodeSession): void {
-        if (confirm('Bu kaydı düzenlemek için yüklemek istiyor musunuz?')) {
+    async loadSession(session: BarcodeSession): Promise<void> {
+        const confirmed = await this.dialogService.confirm(
+            'Düzenleme Onayı',
+            'Bu kaydı düzenlemek için yüklemek istiyor musunuz?'
+        );
+
+        if (confirmed) {
             this.barcodeService.startNewSession(session.fisno, session.tarih);
             session.details.forEach(item => {
                 this.barcodeService.addBarcode(item.barkod, item.miktar);
@@ -80,8 +98,15 @@ export class PendingComponent implements OnInit {
         }
     }
 
-    deleteSession(fisno: string): void {
-        if (confirm('Bu kaydı silmek istediğinize emin misiniz?')) {
+    async deleteSession(fisno: string): Promise<void> {
+        const confirmed = await this.dialogService.confirm(
+            'Silme Onayı',
+            'Bu kaydı silmek istediğinize emin misiniz?',
+            'Sil',
+            'İptal'
+        );
+
+        if (confirmed) {
             this.barcodeService.removePendingSession(fisno);
         }
     }
@@ -90,8 +115,29 @@ export class PendingComponent implements OnInit {
         this.router.navigate(['/pending', session.fisno]);
     }
 
-    clearAllSessions(): void {
-        if (confirm('Tüm kayıtları silmek istediğinize emin misiniz?')) {
+    exportToExcel(): void {
+        const columns = [
+            { header: 'Fiş No', field: 'fisno' },
+            { header: 'Tarih', field: 'tarih' },
+            { header: 'Cari Kodu', field: 'cari_kodu' },
+            { header: 'Cari Adı', field: 'cari_isim' },
+            { header: 'Kullanıcı', field: 'username' },
+            { header: 'Ürün Sayısı', field: 'details', format: (row: any) => row.details.length },
+            { header: 'Toplam Miktar', field: 'details', format: (row: any) => this.getTotalQuantity(row) }
+        ];
+
+        this.excelService.exportToCsv(this.filteredSessions, 'bekleyen-fisler', columns);
+    }
+
+    async clearAllSessions(): Promise<void> {
+        const confirmed = await this.dialogService.confirm(
+            'Toplu Silme Onayı',
+            'Tüm kayıtları silmek istediğinize emin misiniz?',
+            'Tümünü Sil',
+            'İptal'
+        );
+
+        if (confirmed) {
             this.barcodeService.clearPendingSessions();
         }
     }

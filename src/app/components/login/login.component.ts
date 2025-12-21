@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { DialogService } from '../../services/dialog.service';
-import { ConfigService } from '../../services/config.service';
 
 @Component({
     selector: 'app-login',
@@ -22,9 +20,7 @@ export class LoginComponent {
     constructor(
         private authService: AuthService,
         private router: Router,
-        private route: ActivatedRoute,
-        private dialogService: DialogService,
-        private configService: ConfigService
+        private route: ActivatedRoute
     ) {
         // Zaten giriş yapmışsa yönlendir
         if (this.authService.isAuthenticated()) {
@@ -52,19 +48,5 @@ export class LoginComponent {
                 this.loading = false;
             }
         });
-    }
-
-    async openSettings(): Promise<void> {
-        const currentUrl = this.configService.getApiUrl();
-        const newUrl = await this.dialogService.prompt(
-            'API Ayarları',
-            'API adresini giriniz (örn: http://192.168.1.100:8090/api/aydinev)',
-            currentUrl
-        );
-
-        if (newUrl !== null && newUrl.trim() !== '') {
-            this.configService.setApiUrl(newUrl);
-            await this.dialogService.alert('Başarılı', 'API adresi güncellendi.', 'success');
-        }
     }
 }

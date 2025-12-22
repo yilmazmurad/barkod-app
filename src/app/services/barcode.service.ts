@@ -10,6 +10,7 @@ export interface BarcodeItem {
     miktar: number;
     timestamp: Date;
     isEdited?: boolean;
+    sirano?: number;
 }
 
 export interface BarcodeSession {

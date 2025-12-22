@@ -9,6 +9,7 @@ import { ConfigService } from './config.service';
 export interface User {
     username: string;
     token: string;
+    userid: number;
 }
 
 @Injectable({
@@ -30,12 +31,39 @@ export class AuthService {
 
         if (this.isBrowser) {
             storedUser = localStorage.getItem('currentUser');
+
+            this.checkAutoLogout();
         }
 
         this.currentUserSubject = new BehaviorSubject<User | null>(
             storedUser ? JSON.parse(storedUser) : null
         );
         this.currentUser = this.currentUserSubject.asObservable();
+
+        // Her sayfa yüklemesinde veya servis başlatıldığında aktiviteyi güncelle
+        if (this.isBrowser) {
+            window.addEventListener('click', () => this.updateLastActivity());
+            window.addEventListener('keydown', () => this.updateLastActivity());
+        }
+    }
+    // Son aktiviteyi kaydet
+    private updateLastActivity() {
+        if (this.isBrowser && this.isAuthenticated()) {
+            localStorage.setItem('lastActivity', Date.now().toString());
+        }
+    }
+
+    // Otomatik logout kontrolü (1 saat)
+    private checkAutoLogout() {
+        if (!this.isBrowser) return;
+        const lastActivity = localStorage.getItem('lastActivity');
+        if (lastActivity) {
+            const diff = Date.now() - parseInt(lastActivity, 10);
+            const oneHour = 60 * 60 * 1000;
+            if (diff > oneHour) {
+                this.logout();
+            }
+        }
     }
 
     public get currentUserValue(): User | null {
@@ -52,11 +80,13 @@ export class AuthService {
                 if (response.success) {
                     const user: User = {
                         username: response.adisoyadi,
-                        token: response.token
+                        token: response.token,
+                        userid: response.userid
                     };
 
                     if (this.isBrowser) {
                         localStorage.setItem('currentUser', JSON.stringify(user));
+                        localStorage.setItem('lastActivity', Date.now().toString());
                     }
                     this.currentUserSubject.next(user);
                     return user;
@@ -69,6 +99,7 @@ export class AuthService {
     logout(): void {
         if (this.isBrowser) {
             localStorage.removeItem('currentUser');
+            localStorage.removeItem('lastActivity');
         }
         this.currentUserSubject.next(null);
         this.router.navigate(['/login']);

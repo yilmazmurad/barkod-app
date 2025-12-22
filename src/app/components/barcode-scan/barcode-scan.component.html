@@ -44,9 +44,11 @@
                     <div class="flex-1">
                         <label class="block text-xs font-medium text-gray-500 mb-1.5 ml-1">Cari Hesap</label>
                         <div class="flex gap-2">
-                            <input type="text" [value]="selectedCari ? selectedCari.cari_isim : ''" readonly
+                            <input type="text" [value]="selectedCari ? selectedCari.cari_isim : manualCariIsim"
+                                [readonly]="!!selectedCari"
+                                (input)="selectedCari ? null : manualCariIsim = $event.target.value"
                                 class="w-full px-3 py-2 text-sm border border-gray-200 bg-gray-50 rounded-lg text-gray-700"
-                                placeholder="Cari Seçilmedi" />
+                                placeholder="Cari Seçin veya isim girin" />
                             <button (click)="openCariModal()"
                                 class="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 shadow-sm active:scale-95 transition-all duration-200 whitespace-nowrap">
                                 Cari Seç

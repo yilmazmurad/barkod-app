@@ -11,6 +11,17 @@ export interface BarcodeItem {
     timestamp: Date;
     isEdited?: boolean;
     sirano?: number;
+    // API detay alanları
+    okumadetay_id?: number;
+    okuma_id?: number;
+    stok_kodu?: string;
+    stok_adi?: string;
+    fiyat?: number;
+    tutar?: number;
+    is_bulundu?: boolean;
+    is_aktarildi?: boolean;
+    is_new?: boolean;
+    is_deleted?: boolean;
 }
 
 export interface BarcodeSession {
@@ -21,12 +32,28 @@ export interface BarcodeSession {
     username?: string;
     details: BarcodeItem[];
     isPending?: boolean;
+    // API ana alanlar
+    okuma_id?: number;
+    user_id?: number;
+    is_aktarildi?: string;
+    toplam_adet?: number;
+    toplam_tutar?: number;
+    is_new?: boolean;
+    mikro_fisno?: number;
+    mikro_fisseri?: string;
 }
 
 @Injectable({
     providedIn: 'root'
 })
 export class BarcodeService {
+    /**
+     * Dışarıdan session set etmek için public fonksiyon
+     */
+    public setSession(session: BarcodeSession): void {
+        this.currentSessionSubject.next(session);
+        this.saveCurrentSession();
+    }
     private currentSessionSubject = new BehaviorSubject<BarcodeSession | null>(null);
     public currentSession$ = this.currentSessionSubject.asObservable();
 
@@ -252,18 +279,84 @@ export class BarcodeService {
                             tarih: s.date || s.tarih,
                             cari_kodu: s.cari_kodu || '',
                             cari_isim: s.cari_isim || '',
+                            username: s.username || this.authService.currentUserValue?.username || '',
+                            user_id: s.user_id || this.authService.currentUserValue?.userid,
+                            is_aktarildi: s.is_aktarildi || 'H',
+                            toplam_adet: s.toplam_adet || (s.items ? s.items.reduce((sum: number, i: any) => sum + (i.quantity || i.miktar || 0), 0) : 0),
+                            toplam_tutar: s.toplam_tutar || 0,
+                            is_new: s.is_new !== undefined ? s.is_new : true,
+                            mikro_fisno: s.mikro_fisno || 0,
+                            mikro_fisseri: s.mikro_fisseri || '',
+                            okuma_id: s.okuma_id || 0,
                             details: s.items.map((i: any) => ({
                                 barkod: i.barcode || i.barkod,
                                 miktar: i.quantity || i.miktar,
                                 timestamp: i.timestamp,
+                                sirano: i.sirano || 0,
+                                okumadetay_id: i.okumadetay_id || 0,
+                                okuma_id: i.okuma_id || s.okuma_id || 0,
+                                stok_kodu: i.stok_kodu || '',
+                                stok_adi: i.stok_adi || '',
+                                fiyat: i.fiyat || 0,
+                                tutar: i.tutar || 0,
+                                is_bulundu: i.is_bulundu !== undefined ? i.is_bulundu : false,
+                                is_aktarildi: i.is_aktarildi !== undefined ? i.is_aktarildi : false,
+                                is_new: i.is_new !== undefined ? i.is_new : true,
+                                is_deleted: i.is_deleted !== undefined ? i.is_deleted : false,
                                 isEdited: i.isEdited
                             })),
                             isPending: s.isPending
                         };
                     }
 
+                    // Mevcut format için eksik alanları doldur
                     if (!s.username) {
                         s.username = this.authService.currentUserValue?.username || '';
+                    }
+                    if (!s.user_id) {
+                        s.user_id = this.authService.currentUserValue?.userid;
+                    }
+                    if (!s.is_aktarildi) {
+                        s.is_aktarildi = 'H';
+                    }
+                    if (!s.toplam_adet) {
+                        s.toplam_adet = s.details ? s.details.reduce((sum: number, item: any) => sum + item.miktar, 0) : 0;
+                    }
+                    if (!s.toplam_tutar) {
+                        s.toplam_tutar = 0;
+                    }
+                    if (s.is_new === undefined) {
+                        s.is_new = true;
+                    }
+                    if (!s.mikro_fisno) {
+                        s.mikro_fisno = 0;
+                    }
+                    if (!s.mikro_fisseri) {
+                        s.mikro_fisseri = '';
+                    }
+                    if (!s.okuma_id) {
+                        s.okuma_id = 0;
+                    }
+
+                    // Details içindeki eksik alanları doldur
+                    if (s.details) {
+                        s.details = s.details.map((item: any) => ({
+                            barkod: item.barkod,
+                            miktar: item.miktar,
+                            timestamp: item.timestamp,
+                            sirano: item.sirano || 0,
+                            okumadetay_id: item.okumadetay_id || 0,
+                            okuma_id: item.okuma_id || s.okuma_id || 0,
+                            stok_kodu: item.stok_kodu || '',
+                            stok_adi: item.stok_adi || '',
+                            fiyat: item.fiyat || 0,
+                            tutar: item.tutar || 0,
+                            is_bulundu: item.is_bulundu !== undefined ? item.is_bulundu : false,
+                            is_aktarildi: item.is_aktarildi !== undefined ? item.is_aktarildi : false,
+                            is_new: item.is_new !== undefined ? item.is_new : true,
+                            is_deleted: item.is_deleted !== undefined ? item.is_deleted : false,
+                            isEdited: item.isEdited
+                        }));
                     }
 
                     return s;
@@ -285,7 +378,43 @@ export class BarcodeService {
 
     resumeSession(session: BarcodeSession): void {
         this.removePendingSession(session.fisno);
-        this.currentSessionSubject.next({ ...session, isPending: false });
+
+        // Eksik alanları doldur (geçmişten düzenleme gibi)
+        const completeSession: BarcodeSession = {
+            fisno: session.fisno,
+            tarih: session.tarih,
+            cari_kodu: session.cari_kodu || '',
+            cari_isim: session.cari_isim || '',
+            username: session.username || this.authService.currentUserValue?.username || '',
+            user_id: session.user_id || this.authService.currentUserValue?.userid,
+            is_aktarildi: session.is_aktarildi || 'H',
+            toplam_adet: session.toplam_adet || session.details.reduce((sum, item) => sum + item.miktar, 0),
+            toplam_tutar: session.toplam_tutar || 0,
+            is_new: session.is_new !== undefined ? session.is_new : true,
+            mikro_fisno: session.mikro_fisno || 0,
+            mikro_fisseri: session.mikro_fisseri || '',
+            okuma_id: session.okuma_id || 0,
+            details: session.details.map(item => ({
+                barkod: item.barkod,
+                miktar: item.miktar,
+                timestamp: item.timestamp,
+                sirano: item.sirano || 0,
+                okumadetay_id: item.okumadetay_id || 0,
+                okuma_id: item.okuma_id || session.okuma_id || 0,
+                stok_kodu: item.stok_kodu || '',
+                stok_adi: item.stok_adi || '',
+                fiyat: item.fiyat || 0,
+                tutar: item.tutar || 0,
+                is_bulundu: item.is_bulundu !== undefined ? item.is_bulundu : false,
+                is_aktarildi: item.is_aktarildi !== undefined ? item.is_aktarildi : false,
+                is_new: item.is_new !== undefined ? item.is_new : true,
+                is_deleted: item.is_deleted !== undefined ? item.is_deleted : false,
+                isEdited: item.isEdited
+            })),
+            isPending: false
+        };
+
+        this.currentSessionSubject.next(completeSession);
         this.saveCurrentSession();
     }
 
@@ -363,37 +492,40 @@ export class BarcodeService {
     sendSession(session: BarcodeSession): Observable<any> {
         const user = this.authService.currentUserValue;
 
+        // Düzenleme mi, yeni mi?
+        const isEdit = !!session.okuma_id || !!session.mikro_fisno || !!session.mikro_fisseri;
+
         const requestData = {
-            okuma_id: 0,
-            fisno: 0,
+            okuma_id: isEdit ? session.okuma_id ?? 0 : 0,
+            fisno: Number(session.fisno) || 0,
             tarih: session.tarih.includes('T') ? session.tarih : `${session.tarih}T00:00:00`,
             cari_kodu: session.cari_kodu || "",
             cari_isim: session.cari_isim || "",
-            user_id: 1,
-            username: user?.username || "",
-            is_aktarildi: "H",
+            user_id: session.user_id ?? 1,
+            username: user?.username || session.username || "",
+            is_aktarildi: session.is_aktarildi ?? "H",
             toplam_adet: session.details.reduce((sum, item) => sum + item.miktar, 0),
-            toplam_tutar: 0,
-            is_new: true,
-            mikro_fisno: 0,
-            mikro_fisseri: "",
+            toplam_tutar: session.toplam_tutar ?? 0,
+            is_new: !isEdit,
+            mikro_fisno: session.mikro_fisno ?? 0,
+            mikro_fisseri: session.mikro_fisseri ?? "",
             details: session.details.map((item, index) => ({
-                okumadetay_id: 0,
-                okuma_id: 0,
-                sirano: index + 1,
+                okumadetay_id: item.okumadetay_id ?? 0,
+                okuma_id: item.okuma_id ?? (isEdit ? session.okuma_id ?? 0 : 0),
+                sirano: item.sirano ?? (index + 1),
                 barkod: item.barkod,
-                stok_kodu: "",
-                stok_adi: "",
+                stok_kodu: item.stok_kodu ?? "",
+                stok_adi: item.stok_adi ?? "",
                 miktar: item.miktar,
-                fiyat: 0,
-                tutar: 0,
-                is_bulundu: false,
-                is_aktarildi: false,
-                is_new: true,
-                is_deleted: false
+                fiyat: item.fiyat ?? 0,
+                tutar: item.tutar ?? 0,
+                is_bulundu: item.is_bulundu ?? false,
+                is_aktarildi: item.is_aktarildi ?? false,
+                is_new: item.is_new ?? !isEdit,
+                is_deleted: item.is_deleted ?? false
             }))
         };
-
+        console.log('Sending session data:', requestData);
         return this.apiService.saveReceipt(requestData);
     }
 }

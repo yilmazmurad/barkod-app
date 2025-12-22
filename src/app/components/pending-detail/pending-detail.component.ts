@@ -84,9 +84,37 @@ export class PendingDetailComponent implements OnInit {
             'Bu fişi göndermek istediğinize emin misiniz?'
         );
 
-        if (confirmed) {
+        if (confirmed && this.session) {
+            // Eksiksiz ve doğru payload için detayları hazırla
+            const detailsWithAll = this.session.details.map((item, idx) => ({
+                ...item,
+                sirano: Number(item.sirano ?? (idx + 1)),
+                okumadetay_id: Number(item.okumadetay_id ?? 0),
+                okuma_id: Number(item.okuma_id ?? this.session?.okuma_id ?? 0),
+                miktar: Number(item.miktar),
+                fiyat: Number(item.fiyat ?? 0),
+                tutar: Number(item.tutar ?? 0),
+                is_bulundu: !!item.is_bulundu,
+                is_aktarildi: !!item.is_aktarildi,
+                is_new: !!item.is_new,
+                is_deleted: !!item.is_deleted,
+                stok_kodu: item.stok_kodu ?? '',
+                stok_adi: item.stok_adi ?? ''
+            }));
+            const sessionPayload = {
+                ...this.session,
+                fisno: this.session.fisno, // Keep as string, sendSession will handle conversion
+                toplam_adet: detailsWithAll.reduce((sum, item) => sum + item.miktar, 0),
+                toplam_tutar: detailsWithAll.reduce((sum, item) => sum + (item.tutar ?? 0), 0),
+                is_aktarildi: this.session.is_aktarildi ?? 'H',
+                is_new: !!this.session.is_new,
+                mikro_fisno: Number(this.session.mikro_fisno ?? 0),
+                mikro_fisseri: this.session.mikro_fisseri ?? '',
+                okuma_id: Number(this.session.okuma_id ?? 0),
+                details: detailsWithAll
+            };
             this.isSending = true;
-            this.barcodeService.sendSession(this.session).subscribe({
+            this.barcodeService.sendSession(sessionPayload).subscribe({
                 next: (response) => {
                     this.barcodeService.removePendingSession(this.session!.fisno);
                     if (response && response.okuma_id) {
@@ -122,6 +150,6 @@ export class PendingDetailComponent implements OnInit {
             { header: 'Zaman', field: 'timestamp', format: (row: any) => new Date(row.timestamp).toLocaleString() }
         ];
 
-        this.excelService.exportToCsv(this.session.details, `bekleyen-fis-${this.session.fisno}`, columns, summary);
+        this.excelService.exportToExcel(this.session.details, `bekleyen-fis-${this.session.fisno}`, columns, summary, 'xlsx');
     }
 }

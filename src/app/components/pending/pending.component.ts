@@ -89,11 +89,8 @@ export class PendingComponent implements OnInit {
         );
 
         if (confirmed) {
-            this.barcodeService.startNewSession(session.fisno, session.tarih);
-            session.details.forEach(item => {
-                this.barcodeService.addBarcode(item.barkod, item.miktar);
-            });
-            this.barcodeService.removePendingSession(session.fisno);
+            // resumeSession kullanarak tüm verileri eksiksiz aktar
+            this.barcodeService.resumeSession(session);
             this.router.navigate(['/scan']);
         }
     }
@@ -126,7 +123,7 @@ export class PendingComponent implements OnInit {
             { header: 'Toplam Miktar', field: 'details', format: (row: any) => this.getTotalQuantity(row) }
         ];
 
-        this.excelService.exportToCsv(this.filteredSessions, 'bekleyen-fisler', columns);
+        this.excelService.exportToExcel(this.filteredSessions, 'bekleyen-fisler', columns, undefined, 'xlsx');
     }
 
     async clearAllSessions(): Promise<void> {

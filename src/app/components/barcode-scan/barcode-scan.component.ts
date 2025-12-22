@@ -18,6 +18,7 @@ import { Subject, debounceTime } from 'rxjs';
     styleUrls: ['./barcode-scan.component.css']
 })
 export class BarcodeScanComponent implements OnInit, OnDestroy {
+    isSending = false;
     @ViewChild('barcodeInput') barcodeInput!: ElementRef<HTMLInputElement>;
 
     fisno = '';
@@ -304,6 +305,8 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
         );
         if (confirmed) {
             this.barcodeService.clearSession();
+            this.selectedCari = null;
+            this.manualCariIsim = '';
             this.loadNewReceiptDetails();
         }
     }
@@ -327,7 +330,20 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
 
 
 
-        const detailsWithSirano = this.details.map((item, idx) => ({ ...item, sirano: idx + 1 }));
+        const detailsWithSirano = this.details.map((item, idx) => ({
+            ...item,
+            sirano: item.sirano ?? (idx + 1),
+            okumadetay_id: item.okumadetay_id ?? 0,
+            okuma_id: item.okuma_id ?? 0,
+            stok_kodu: item.stok_kodu ?? '',
+            stok_adi: item.stok_adi ?? '',
+            fiyat: item.fiyat ?? 0,
+            tutar: item.tutar ?? 0,
+            is_bulundu: item.is_bulundu ?? false,
+            is_aktarildi: item.is_aktarildi ?? false,
+            is_new: item.is_new ?? true,
+            is_deleted: item.is_deleted ?? false
+        }));
 
         // Cari isim önceliği: seçili cari varsa onu, yoksa manuel girileni kullan
         const session: any = {
@@ -335,13 +351,22 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
             tarih: this.date,
             details: detailsWithSirano,
             username: this.authService.currentUserValue?.username || '',
-            userid: this.authService.currentUserValue?.userid || null,
+            user_id: this.authService.currentUserValue?.userid || null,
             cari_kodu: this.selectedCari?.cari_kodu || '',
-            cari_isim: this.selectedCari?.cari_isim || this.manualCariIsim || ''
+            cari_isim: this.selectedCari?.cari_isim || this.manualCariIsim || '',
+            toplam_adet: detailsWithSirano.reduce((sum, item) => sum + item.miktar, 0),
+            toplam_tutar: detailsWithSirano.reduce((sum, item) => sum + (item.tutar ?? 0), 0),
+            is_aktarildi: this.currentSession?.is_aktarildi ?? "H",
+            is_new: this.currentSession?.is_new ?? true,
+            mikro_fisno: 0,
+            mikro_fisseri: '',
+            okuma_id: this.currentSession?.okuma_id ?? 0
         };
 
+        this.isSending = true;
         this.apiService.saveReceipt(session).subscribe({
             next: () => {
+                this.isSending = false;
                 this.dialogService.alert('Başarılı', 'Başarıyla gönderildi ve geçmişe kaydedildi!', 'success');
                 this.barcodeService.clearSession();
                 this.selectedCari = null;
@@ -349,6 +374,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
                 this.loadNewReceiptDetails();
             },
             error: (err) => {
+                this.isSending = false;
                 this.dialogService.alert('Hata', 'API\'ye gönderilemedi: ' + (err?.message || 'Bilinmeyen hata'), 'error');
             }
         });

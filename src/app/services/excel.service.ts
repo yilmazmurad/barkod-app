@@ -1,9 +1,57 @@
 import { Injectable } from '@angular/core';
+import * as XLSX from 'xlsx';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ExcelService {
+
+    exportToExcel(
+        data: any[],
+        fileName: string,
+        columns: { header: string, field: string, type?: 'text', format?: (val: any) => any }[],
+        summary?: { label: string, value: any }[],
+        ext: 'xlsx' | 'xls' = 'xlsx'
+    ) {
+        if (!data || !data.length) {
+            return;
+        }
+
+        // 1. Summary rows (üstte, key-value)
+        let wsData: any[][] = [];
+        if (summary && summary.length > 0) {
+            summary.forEach(item => {
+                wsData.push([item.label, item.value]);
+            });
+            wsData.push([]); // boş satır
+        }
+
+        // 2. Header row
+        wsData.push(columns.map(col => col.header));
+
+        // 3. Data rows
+        data.forEach(row => {
+            const rowData = columns.map(col => {
+                let val = row[col.field];
+                if (col.format) {
+                    val = col.format(row);
+                } else if (val === null || val === undefined) {
+                    val = '';
+                }
+                return val;
+            });
+            wsData.push(rowData);
+        });
+
+        // Worksheet ve workbook oluştur
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Fiş Detayı');
+
+        // Dosya oluştur
+        const fileExt = ext === 'xls' ? 'xls' : 'xlsx';
+        XLSX.writeFile(wb, `${fileName}.${fileExt}`);
+    }
 
     constructor() { }
 

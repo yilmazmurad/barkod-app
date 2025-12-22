@@ -166,7 +166,7 @@ export class HistoryComponent implements OnInit {
             { header: 'Aktarıldı', field: 'is_aktarildi', format: (row: any) => row.is_aktarildi === 'E' ? 'Evet' : 'Hayır' }
         ];
 
-        this.excelService.exportToCsv(this.filteredHistoryItems, 'gecmis-fisler', columns);
+        this.excelService.exportToExcel(this.filteredHistoryItems, 'gecmis-fisler', columns, undefined, 'xlsx');
     }
 
     navigateToScan(): void {

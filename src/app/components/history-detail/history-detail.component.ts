@@ -5,6 +5,7 @@ import { ApiService, HistoryDetail } from '../../services/api.service';
 import { BarcodeService } from '../../services/barcode.service';
 import { ExcelService } from '../../services/excel.service';
 import { DialogService } from '../../services/dialog.service';
+import { Console } from 'console';
 
 @Component({
     selector: 'app-history-detail',
@@ -63,24 +64,41 @@ export class HistoryDetailComponent implements OnInit {
             'Düzenleme Onayı',
             'Bu fişi düzenlemek için yeni bir oturum başlatılacak. Onaylıyor musunuz?'
         );
-
+        console.log('User confirmed editReceipt:', this.detail);
         if (confirmed) {
-            // Yeni oturum başlat
-            this.barcodeService.startNewSession(
-                this.detail.fisno.toString(),
-                this.detail.tarih.split('T')[0], // Tarih formatı YYYY-MM-DD olmalı
-                {
-                    cari_kodu: this.detail.cari_kodu,
-                    cari_isim: this.detail.cari_isim
-                }
-            );
-
-            // Ürünleri ekle
-            this.detail.details.forEach(item => {
-                this.barcodeService.addBarcode(item.barkod, item.miktar);
-            });
-
-            // Scan sayfasına git
+            // Tüm fiş bilgilerini session'a aktar
+            const session = {
+                fisno: this.detail.fisno.toString(),
+                tarih: this.detail.tarih.split('T')[0],
+                cari_kodu: this.detail.cari_kodu,
+                cari_isim: this.detail.cari_isim,
+                username: this.detail.username,
+                user_id: this.detail.user_id,
+                is_aktarildi: this.detail.is_aktarildi,
+                toplam_adet: this.detail.toplam_adet,
+                toplam_tutar: this.detail.toplam_tutar,
+                is_new: this.detail.is_new,
+                mikro_fisno: this.detail.mikro_fisno,
+                mikro_fisseri: this.detail.mikro_fisseri,
+                okuma_id: this.detail.okuma_id,
+                details: this.detail.details.map(item => ({
+                    barkod: item.barkod,
+                    miktar: item.miktar,
+                    timestamp: new Date(),
+                    sirano: item.sirano,
+                    okumadetay_id: item.okumadetay_id,
+                    okuma_id: item.okuma_id,
+                    stok_kodu: item.stok_kodu,
+                    stok_adi: item.stok_adi,
+                    fiyat: item.fiyat,
+                    tutar: item.tutar,
+                    is_bulundu: item.is_bulundu,
+                    is_aktarildi: item.is_aktarildi,
+                    is_new: item.is_new,
+                    is_deleted: item.is_deleted
+                }))
+            };
+            this.barcodeService.setSession(session);
             this.router.navigate(['/scan']);
         }
     }
@@ -107,6 +125,6 @@ export class HistoryDetailComponent implements OnInit {
         ];
 
         const fileName = `Fis_Detay_${this.detail.fisno}_${new Date().toISOString().split('T')[0]}`;
-        this.excelService.exportToCsv(this.detail.details, fileName, columns, summary);
+        this.excelService.exportToExcel(this.detail.details, fileName, columns, summary, 'xlsx');
     }
 }

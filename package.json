@@ -32,6 +32,7 @@
     "@angular/router": "^20.3.0",
     "@angular/ssr": "^20.3.10",
     "express": "^5.1.0",
+    "html5-qrcode": "^2.3.8",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "xlsx": "^0.18.5",

@@ -105,6 +105,34 @@
                             </svg>
                             <span class="hidden xl:inline">Stok Ara</span>
                         </button>
+                        <button (click)="openCameraModal()"
+                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm shadow-green-200 active:scale-95 transition-all duration-200 flex items-center gap-2"
+                            title="Kameradan Barkod Oku">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 7V5a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2m-10 0H5a2 2 0 01-2-2v-2m16-10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h14z" />
+                            </svg>
+                            <span class="hidden xl:inline">Kameradan Barkod Oku</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Kamera Modalı -->
+                <div *ngIf="showCameraModal"
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+                    <div
+                        class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md flex flex-col items-center gap-4 relative">
+                        <button (click)="closeCameraModal()"
+                            class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <h3 class="text-lg font-bold text-gray-800 mb-2">Kameradan Barkod Oku</h3>
+                        <!-- html5-qrcode barkod okuma alanı -->
+                        <div id="camera-reader"
+                            class="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                        </div>
                     </div>
                 </div>
             </div>

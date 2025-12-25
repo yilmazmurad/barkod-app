@@ -18,6 +18,72 @@ import { Subject, debounceTime } from 'rxjs';
     styleUrls: ['./barcode-scan.component.css']
 })
 export class BarcodeScanComponent implements OnInit, OnDestroy {
+    // Kamera barkod okuma için
+    private html5QrCode: any = null;
+    private cameraStarted = false;
+
+    async openCameraModal() {
+        this.showCameraModal = true;
+        setTimeout(() => this.startCameraScan(), 200);
+    }
+
+    async startCameraScan() {
+        if (this.cameraStarted) return;
+        this.cameraStarted = true;
+        try {
+            const { Html5Qrcode } = await import('html5-qrcode');
+            this.html5QrCode = new Html5Qrcode('camera-reader');
+            const devices = await Html5Qrcode.getCameras();
+            // Arka kamerayı bulmaya çalış
+            const backCam = devices.find(d =>
+                d.label.toLowerCase().includes('back') ||
+                d.label.toLowerCase().includes('rear') ||
+                d.label.toLowerCase().includes('environment') ||
+                d.label.toLowerCase().includes('arka')
+            ) || devices[0];
+            const cameraId = backCam?.id;
+            if (!cameraId) throw new Error('Kamera bulunamadı');
+            await this.html5QrCode.start(
+                cameraId,
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 100 }
+                },
+                (decodedText: string) => {
+                    this.onBarcodeScanned(decodedText);
+                },
+                (error: any) => {
+                    // Hata yönetimi (isteğe bağlı)
+                }
+            );
+        } catch (err) {
+            this.dialogService.alert('Kamera Hatası', 'Kamera başlatılamadı: ' + err, 'error');
+        }
+    }
+
+    async closeCameraModal() {
+        this.showCameraModal = false;
+        if (this.html5QrCode && this.cameraStarted) {
+            await this.html5QrCode.stop();
+            await this.html5QrCode.clear();
+            this.html5QrCode = null;
+            this.cameraStarted = false;
+        }
+    }
+
+    onBarcodeScanned(barcode: string) {
+        this.closeCameraModal();
+        // Barkodu mevcut akışa ilet
+        if (barcode && barcode.length > 2) {
+            if (this.currentSession) {
+                this.barcodeService.addBarcode(barcode, 1);
+            } else {
+                this.handleScannedBarcode(barcode);
+            }
+        }
+    }
+    // Kamera modalı için
+    showCameraModal = false;
     isSending = false;
     @ViewChild('barcodeInput') barcodeInput!: ElementRef<HTMLInputElement>;
 
@@ -232,6 +298,8 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     openStockModal() {
         this.showStockModal = true;
     }
+
+    // Kamera modalı aç/kapat fonksiyonları
 
     closeStockModal() {
         this.showStockModal = false;

@@ -232,7 +232,10 @@ export class BarcodeService {
         const session = this.currentSessionSubject.value;
         if (!session) return;
 
-        session.details = session.details.filter(item => item.barkod !== barkod);
+        const item = session.details.find(i => i.barkod?.trim() === barkod?.trim());
+        if (item) {
+            item.is_deleted = true;
+        }
         this.currentSessionSubject.next({ ...session });
         this.saveCurrentSession();
     }

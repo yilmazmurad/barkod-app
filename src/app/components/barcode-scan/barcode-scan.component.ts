@@ -26,6 +26,10 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     details: BarcodeItem[] = [];
     currentSession: any = null;
 
+    get activeDetails(): BarcodeItem[] {
+        return this.details.filter(item => !(item.is_deleted ?? false));
+    }
+
     // Cari Seçimi
     showCariModal = false;
     selectedCari: { cari_kodu: string, cari_isim: string } | null = null;
@@ -292,6 +296,10 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
         );
         if (confirmed) {
             this.barcodeService.removeBarcode(barcode);
+            const item = this.details.find(i => i.barkod?.trim() === barcode?.trim());
+            if (item) {
+                item.is_deleted = true;
+            }
             setTimeout(() => this.focusBarcodeInput(), 100);
         }
     }
@@ -312,7 +320,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     }
 
     saveToPending(): void {
-        if (this.details.length === 0) {
+        if (this.activeDetails.length === 0) {
             this.dialogService.alert('Uyarı', 'Liste boş!', 'warning');
             return;
         }
@@ -322,7 +330,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     }
 
     sendToApi(): void {
-        if (this.details.length === 0) {
+        if (this.activeDetails.length === 0) {
             this.dialogService.alert('Uyarı', 'Liste boş!', 'warning');
             return;
         }
@@ -354,8 +362,8 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
             user_id: this.authService.currentUserValue?.userid || null,
             cari_kodu: this.selectedCari?.cari_kodu || '',
             cari_isim: this.selectedCari?.cari_isim || this.manualCariIsim || '',
-            toplam_adet: detailsWithSirano.reduce((sum, item) => sum + item.miktar, 0),
-            toplam_tutar: detailsWithSirano.reduce((sum, item) => sum + (item.tutar ?? 0), 0),
+            toplam_adet: this.activeDetails.reduce((sum, item) => sum + item.miktar, 0),
+            toplam_tutar: this.activeDetails.reduce((sum, item) => sum + (item.tutar ?? 0), 0),
             is_aktarildi: this.currentSession?.is_aktarildi ?? "H",
             is_new: this.currentSession?.is_new ?? true,
             mikro_fisno: 0,

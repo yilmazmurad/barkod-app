@@ -18,6 +18,7 @@ export class PendingComponent implements OnInit {
     pendingSessions: BarcodeSession[] = [];
     filteredSessions: BarcodeSession[] = [];
     searchText: string = '';
+    showSearch: boolean = false;
 
     filters = {
         fisno: '',
@@ -145,6 +146,10 @@ export class PendingComponent implements OnInit {
 
     navigateToHistory(): void {
         this.router.navigate(['/history']);
+    }
+
+    toggleSearch(): void {
+        this.showSearch = !this.showSearch;
     }
 
     logout(): void {

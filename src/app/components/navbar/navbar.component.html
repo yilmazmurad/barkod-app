@@ -19,8 +19,8 @@
 
             <!-- Navigation -->
             <div class="flex items-center gap-4">
-                <!-- Actions -->
-                <div class="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/5">
+                <!-- Desktop Actions -->
+                <div class="hidden md:flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/5">
                     <button (click)="navigateToScan()"
                         [ngClass]="{'text-white bg-blue-600 shadow-sm shadow-blue-500/20': isActive('/scan'), 'text-slate-400 hover:text-white hover:bg-white/5': !isActive('/scan')}"
                         class="px-3 py-1.5 text-sm font-medium rounded-lg transition-all">
@@ -43,7 +43,18 @@
                     </button>
                 </div>
 
-                <div class="h-6 w-px bg-white/10 mx-1"></div>
+                <!-- Mobile Menu Button -->
+                <button (click)="toggleMobileMenu()"
+                    class="md:hidden p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path *ngIf="!isMobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16"></path>
+                        <path *ngIf="isMobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+
+                <div class="h-6 w-px bg-white/10 mx-1 hidden md:block"></div>
 
                 <!-- User Profile & Dropdown -->
                 <div class="relative">
@@ -61,6 +72,15 @@
                         </svg>
                     </button>
 
+                    <!-- Mobile User Button -->
+                    <button (click)="toggleDropdown()"
+                        class="md:hidden p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                        <div
+                            class="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold">
+                            {{ authService.currentUserValue?.username?.charAt(0)?.toUpperCase() }}
+                        </div>
+                    </button>
+
                     <!-- Dropdown Menu -->
                     <div *ngIf="isDropdownOpen"
                         class="absolute right-0 mt-2 w-48 bg-slate-800 rounded-xl shadow-lg border border-white/10 py-1 z-50">
@@ -75,6 +95,31 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div *ngIf="isMobileMenuOpen" class="md:hidden bg-slate-800 border-t border-white/10">
+            <div class="px-4 py-3 space-y-2">
+                <button (click)="navigateToScan(); toggleMobileMenu()"
+                    [ngClass]="{'text-white bg-blue-600': isActive('/scan'), 'text-slate-400 hover:text-white': !isActive('/scan')}"
+                    class="w-full text-left px-3 py-2 text-sm font-medium rounded-lg transition-all">
+                    Okuma
+                </button>
+                <button (click)="navigateToPending(); toggleMobileMenu()"
+                    [ngClass]="{'text-white bg-amber-600': isActive('/pending'), 'text-slate-400 hover:text-white': !isActive('/pending')}"
+                    class="w-full text-left px-3 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-between">
+                    <span>Bekleyenler</span>
+                    <span *ngIf="(barcodeService.pendingSessions$ | async)?.length as count"
+                        class="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-[10px] font-bold rounded-full bg-amber-500 text-white">
+                        {{ count }}
+                    </span>
+                </button>
+                <button (click)="navigateToHistory(); toggleMobileMenu()"
+                    [ngClass]="{'text-white bg-green-600': isActive('/history'), 'text-slate-400 hover:text-white': !isActive('/history')}"
+                    class="w-full text-left px-3 py-2 text-sm font-medium rounded-lg transition-all">
+                    Geçmiş
+                </button>
             </div>
         </div>
     </div>

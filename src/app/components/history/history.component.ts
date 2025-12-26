@@ -37,6 +37,7 @@ export class HistoryComponent implements OnInit {
     currentPage = 1;
     pageSize = 20;
     hasMore = true;
+    showSearch: boolean = false;
 
     filters = {
         fisno: '',
@@ -175,6 +176,10 @@ export class HistoryComponent implements OnInit {
 
     navigateToPending(): void {
         this.router.navigate(['/pending']);
+    }
+
+    toggleSearch(): void {
+        this.showSearch = !this.showSearch;
     }
 
     logout(): void {

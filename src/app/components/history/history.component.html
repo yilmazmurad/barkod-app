@@ -8,7 +8,7 @@
                 <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{
                     filteredHistoryItems.length }} kayıt</span>
             </div>
-            <div class="flex gap-2">
+            <div class="hidden md:flex gap-2">
                 <button (click)="exportToExcel()"
                     class="px-4 py-2 bg-green-100 text-green-700 text-sm font-medium rounded-lg hover:bg-green-200 transition-colors flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,6 +29,24 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Mobile Actions -->
+            <div class="md:hidden flex gap-2">
+                <button (click)="toggleSearch()"
+                    class="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </button>
+                <button (click)="exportToExcel()"
+                    class="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         @if (historyItems.length === 0 && !isLoading) {
@@ -44,8 +62,32 @@
             <p class="text-sm text-gray-400 mt-1">Henüz geçmiş fiş bulunmuyor.</p>
         </div>
         } @else {
+        <!-- Mobile Search Panel -->
+        @if (showSearch) {
+        <div class="md:hidden shrink-0 bg-white border-b border-gray-200 p-4">
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                <input type="text" [(ngModel)]="filters.genel_arama" (ngModelChange)="onFilterChange()"
+                    class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    placeholder="Genel arama..." />
+                <button (click)="toggleSearch()" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <svg class="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        }
         <div class="flex-1 overflow-auto bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col">
-            <div class="flex-1 overflow-auto">
+            <!-- Desktop Table View -->
+            <div class="hidden md:flex flex-1 overflow-auto">
                 <table class="min-w-full divide-y divide-gray-100">
                     <thead class="bg-gray-50/80 backdrop-blur-sm sticky top-0 z-10">
                         <tr>
@@ -139,6 +181,44 @@
                         }
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile Card View -->
+            <div class="md:hidden flex-1 overflow-auto space-y-3 p-4">
+                @for (item of filteredHistoryItems; track item.okuma_id) {
+                <div (click)="viewDetail(item)"
+                    class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow cursor-pointer">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <h3 class="text-sm font-bold text-gray-900">{{ item.fisno }}</h3>
+                            </div>
+                            <p class="text-xs text-gray-600">{{ item.cari_isim || '-' }}</p>
+                            <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                                <span>{{ item.tarih | date:'dd.MM.yyyy' }}</span>
+                                @if (item.username) {
+                                <span>{{ item.username }}</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-bold text-gray-900">{{ item.toplam_adet }}</div>
+                            <div class="text-xs text-gray-500">adet</div>
+                            <div class="text-sm font-bold text-green-600 mt-1">{{ item.toplam_tutar |
+                                currency:'TRY':'symbol-narrow':'1.2-2' }}</div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                            [ngClass]="item.is_aktarildi === 'E' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'">
+                            {{ item.is_aktarildi === 'E' ? 'Aktarıldı' : 'Bekliyor' }}
+                        </span>
+                        <div class="text-xs text-gray-500">{{ item.cari_kodu }}</div>
+                    </div>
+                </div>
+                }
             </div>
 
             @if (hasMore) {

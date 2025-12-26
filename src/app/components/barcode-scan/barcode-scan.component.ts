@@ -21,6 +21,8 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     isSending = false;
     @ViewChild('barcodeInput') barcodeInput!: ElementRef<HTMLInputElement>;
 
+    isDetailsOpen = false; // Mobil için varsayılan gizli
+
     fisno = '';
     date = new Date().toISOString().split('T')[0];
     details: BarcodeItem[] = [];
@@ -68,9 +70,15 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        // PC'de detaylar her zaman açık, mobilde session yoksa açık
+        const isDesktop = window.innerWidth >= 768;
+        this.isDetailsOpen = isDesktop || !this.currentSession;
+
         // 1. Mevcut session değişikliklerini izle
         this.barcodeService.currentSession$.subscribe(session => {
             this.currentSession = session;
+            const isDesktop = window.innerWidth >= 768;
+            this.isDetailsOpen = isDesktop || !session;
             if (session) {
                 this.fisno = session.fisno;
                 this.date = session.tarih;
@@ -413,5 +421,9 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
         this.manualCariIsim = '';
         this.barcodeService.updateSessionCari(cari);
         this.closeCariModal();
+    }
+
+    toggleDetails() {
+        this.isDetailsOpen = !this.isDetailsOpen;
     }
 }

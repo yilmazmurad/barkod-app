@@ -13,6 +13,7 @@ import { BarcodeService } from '../../services/barcode.service';
 })
 export class NavbarComponent {
     isDropdownOpen = false;
+    isMobileMenuOpen = false;
 
     constructor(
         public authService: AuthService,
@@ -22,6 +23,10 @@ export class NavbarComponent {
 
     toggleDropdown() {
         this.isDropdownOpen = !this.isDropdownOpen;
+    }
+
+    toggleMobileMenu() {
+        this.isMobileMenuOpen = !this.isMobileMenuOpen;
     }
 
     logout() {

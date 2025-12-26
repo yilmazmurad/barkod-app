@@ -2,10 +2,22 @@
     <!-- Navbar moved to AppComponent -->
 
     <!-- Main Content -->
-    <div class="w-full h-[calc(100vh-4rem)] flex flex-col p-4 gap-4">
+    <div class="w-full h-[calc(100vh-4rem)] flex flex-col p-2 md:p-4 gap-2 md:gap-4">
+
+        <!-- Details Toggle Button -->
+        <div class="shrink-0">
+            <button (click)="toggleDetails()"
+                class="w-full px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2">
+                <svg class="w-4 h-4 transition-transform" [class.rotate-180]="isDetailsOpen" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+                {{ isDetailsOpen ? 'Detayları Gizle' : 'Detayları Göster' }}
+            </button>
+        </div>
 
         <!-- Top Section: Session Info & Manual Entry -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 shrink-0">
+        <div *ngIf="isDetailsOpen" class="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-4 shrink-0">
             <!-- Session Info -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 transition-shadow hover:shadow-md">
                 <div class="flex items-center gap-2 mb-3">
@@ -16,7 +28,7 @@
                     <div class="flex-1">
                         <label class="block text-xs font-medium text-gray-500 mb-1.5 ml-1">Fiş No</label>
                         <input type="text" [(ngModel)]="fisno" [disabled]="currentSession !== null"
-                            class="w-full px-3 py-2 text-sm border border-gray-200 bg-gray-50 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                            class="w-full px-3 py-2 md:py-3 text-sm border border-gray-200 bg-gray-50 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                             placeholder="Fiş No" />
                     </div>
                     <div class="flex-1">
@@ -270,7 +282,7 @@
                                 </div>
                                 } @else {
                                 <div
-                                    class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    class="flex justify-end gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                     <button (click)="editQuantity(item)"
                                         class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                         title="Düzenle">

@@ -21,6 +21,7 @@ export interface HistoryItem {
     toplam_tutar: number;
     mikro_fisno: number;
     mikro_fisseri: string;
+    is_urundurum?: boolean;
 }
 
 @Component({
@@ -79,7 +80,12 @@ export class HistoryComponent implements OnInit {
         // Server-side filtreleme şimdilik kapalı, tüm veriyi çekip client-side filtreliyoruz
         this.apiService.getHistory(this.currentPage, this.pageSize).subscribe({
             next: (data) => {
-                const items = data || [];
+                const raw = data || [];
+                const items = raw.map((i: any) => ({
+                    ...i,
+                    is_urundurum: i.is_urundurum === undefined ? true : !!i.is_urundurum
+                })) as HistoryItem[];
+
                 if (this.currentPage === 1) {
                     this.historyItems = items;
                 } else {

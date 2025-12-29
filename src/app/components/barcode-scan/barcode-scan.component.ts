@@ -77,8 +77,7 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
         // 1. Mevcut session değişikliklerini izle
         this.barcodeService.currentSession$.subscribe(session => {
             this.currentSession = session;
-            const isDesktop = window.innerWidth >= 768;
-            this.isDetailsOpen = isDesktop || !session;
+            // Detay panelinin açık/kapalı durumu kullanıcıya bağlı, session değişikliğinde değiştirme
             if (session) {
                 this.fisno = session.fisno;
                 this.date = session.tarih;
@@ -123,6 +122,15 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
     handleKeypress(event: KeyboardEvent): void {
         const currentTime = Date.now();
 
+        // Eğer detay butonuna odaklanılmışsa ve Enter'a basıldıysa hiçbir şey yapma (detay toggle'ı engelle)
+        const target = event.target as HTMLElement;
+        if (target.tagName === 'BUTTON' && target.innerText.includes('Detay')) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                return;
+            }
+        }
+
         // Enter tuşu - barkod tamamlandı
         if (event.key === 'Enter') {
             if (this.barcodeBuffer.length > 0) {
@@ -134,7 +142,6 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
         }
 
         // Input alanlarına yazı yazılıyorsa barkod okumayı atla
-        const target = event.target as HTMLElement;
         if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
             return;
         }

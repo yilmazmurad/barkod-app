@@ -1,3 +1,13 @@
+@if (isLoading) {
+<div class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+    <div class="text-center">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-slate-900 mb-4">
+        </div>
+        <p class="text-slate-600 font-medium">Uygulama yükleniyor...</p>
+    </div>
+</div>
+}
+
 <app-navbar *ngIf="authService.currentUser | async"></app-navbar>
 <router-outlet></router-outlet>
 <app-dialog></app-dialog>

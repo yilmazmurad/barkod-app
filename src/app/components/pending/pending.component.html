@@ -103,11 +103,11 @@
         </div>
         }
         <!-- Desktop Table View -->
-        <div class="hidden md:flex flex-1 overflow-auto bg-white rounded-xl border border-gray-100 shadow-sm">
-            <table class="min-w-full divide-y divide-gray-100">
+        <div class="hidden md:flex flex-col w-full overflow-auto bg-white rounded-xl border border-gray-100 shadow-sm">
+            <table class="min-w-full divide-y divide-gray-100 min-h-[120px] max-h-[320px] table-fixed text-sm">
                 <thead class="bg-gray-50/80 backdrop-blur-sm sticky top-0 z-10">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <th class="px-2 py-2 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
                             <div class="flex flex-col gap-2">
                                 <span>Fiş No / Cari</span>
                                 <input type="text" [(ngModel)]="filters.fisno" (ngModelChange)="filterSessions()"
@@ -115,7 +115,7 @@
                                     placeholder="Ara..." />
                             </div>
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <th class="px-2 py-2 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
                             <div class="flex flex-col gap-2">
                                 <span>Tarih</span>
                                 <input type="date" [(ngModel)]="filters.tarih" (ngModelChange)="filterSessions()"
@@ -123,7 +123,7 @@
                                     placeholder="YYYY-MM-DD" />
                             </div>
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <th class="px-2 py-2 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
                             <div class="flex flex-col gap-2">
                                 <span>Kullanıcı</span>
                                 <input type="text" [(ngModel)]="filters.username" (ngModelChange)="filterSessions()"
@@ -131,13 +131,13 @@
                                     placeholder="Ara..." />
                             </div>
                         </th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <th class="px-2 py-2 text-center text-sm font-bold text-gray-500 uppercase tracking-wider">
                             Ürün Sayısı
                         </th>
-                        <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <th class="px-2 py-2 text-center text-sm font-bold text-gray-500 uppercase tracking-wider">
                             Toplam Miktar
                         </th>
-                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <th class="px-2 py-2 text-right text-sm font-bold text-gray-500 uppercase tracking-wider">
                             İşlemler
                         </th>
                     </tr>
@@ -145,38 +145,54 @@
                 <tbody class="bg-white divide-y divide-gray-50">
                     @for (session of filteredSessions; track session.fisno) {
                     <tr class="hover:bg-amber-50/30 transition-colors group">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td class="px-1 py-1 whitespace-nowrap text-sm font-medium text-gray-900">
                             {{ session.fisno }}
                             @if (session.cari_isim) {
-                            <div class="text-xs text-gray-500 font-normal mt-0.5">{{ session.cari_isim }}</div>
+                            <div class="text-[9px] text-gray-500 font-normal mt-0.5">{{ session.cari_isim }}</div>
                             }
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-1 py-1 whitespace-nowrap text-sm text-gray-500">
                             {{ session.tarih | date:'dd.MM.yyyy' }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-1 py-1 whitespace-nowrap text-sm text-gray-500">
                             {{ session.username || '-' }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">
+                        <td class="px-1 py-1 whitespace-nowrap text-sm text-gray-900 text-center">
                             {{ session.details.length }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
+                        <td class="px-1 py-1 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
                             {{ getTotalQuantity(session) }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex justify-end gap-2">
+                        <td class="px-1 py-1 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex justify-end gap-0.5">
                                 <button (click)="viewDetail(session)"
-                                    class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors text-xs font-bold uppercase tracking-wide">
+                                    class="px-2 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-semibold uppercase tracking-wide">
                                     Detay
                                 </button>
                                 <button (click)="loadSession(session)"
-                                    class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-xs font-bold uppercase tracking-wide">
+                                    class="px-2 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-xs font-semibold uppercase tracking-wide">
                                     Düzenle
                                 </button>
+                                <button (click)="sendSession(session)" [disabled]="isSending"
+                                    class="px-2 py-1 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-xs font-semibold uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed">
+                                    @if (isSending) {
+                                    <svg class="animate-spin h-3 w-3 text-green-600" xmlns="http://www.w3.org/2000/svg"
+                                        fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4">
+                                        </circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
+                                    </svg>
+                                    } @else {
+                                    Gönder
+                                    }
+                                </button>
                                 <button (click)="deleteSession(session.fisno)"
-                                    class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    class="px-2 py-1 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                     title="Sil">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
                                         </path>
@@ -191,19 +207,20 @@
         </div>
 
         <!-- Mobile Card View -->
-        <div class="md:hidden flex-1 overflow-auto space-y-3">
+        <div class="md:hidden overflow-auto space-y-0 p-1">
             @for (session of filteredSessions; track session.fisno) {
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
-                <div class="flex justify-between items-start mb-3">
+            <div
+                class="bg-white rounded-xl shadow-sm border border-gray-100 p-2 hover:shadow-md transition-shadow min-h-[44px]">
+                <div class="flex justify-between items-start mb-1">
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-1">
-                            <div class="w-2 h-2 bg-amber-500 rounded-full"></div>
+                            <div class="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
                             <h3 class="text-sm font-bold text-gray-900">{{ session.fisno }}</h3>
                         </div>
                         @if (session.cari_isim) {
                         <p class="text-xs text-gray-600">{{ session.cari_isim }}</p>
                         }
-                        <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                        <div class="flex items-center gap-2 mt-1 text-xs text-gray-500">
                             <span>{{ session.tarih | date:'dd.MM.yyyy' }}</span>
                             @if (session.username) {
                             <span>{{ session.username }}</span>
@@ -218,17 +235,32 @@
 
                 <div class="flex gap-2">
                     <button (click)="viewDetail(session)"
-                        class="flex-1 px-3 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors text-xs font-medium">
+                        class="flex-1 px-2 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">
                         Detay
                     </button>
                     <button (click)="loadSession(session)"
-                        class="flex-1 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-xs font-medium">
+                        class="flex-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium">
                         Düzenle
                     </button>
+                    <button (click)="sendSession(session)" [disabled]="isSending"
+                        class="flex-1 px-2 py-1 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                        @if (isSending) {
+                        <svg class="animate-spin h-3 w-3 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        } @else {
+                        Gönder
+                        }
+                    </button>
                     <button (click)="deleteSession(session.fisno)"
-                        class="px-3 py-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        class="px-2 py-1 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Sil">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
                             </path>

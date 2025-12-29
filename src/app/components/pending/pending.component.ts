@@ -19,6 +19,7 @@ export class PendingComponent implements OnInit {
     filteredSessions: BarcodeSession[] = [];
     searchText: string = '';
     showSearch: boolean = false;
+    isSending = false;
 
     filters = {
         fisno: '',
@@ -106,6 +107,65 @@ export class PendingComponent implements OnInit {
 
         if (confirmed) {
             this.barcodeService.removePendingSession(fisno);
+        }
+    }
+
+    async sendSession(session: BarcodeSession): Promise<void> {
+        if (this.isSending) return;
+
+        const confirmed = await this.dialogService.confirm(
+            'Gönderim Onayı',
+            'Bu fişi göndermek istediğinize emin misiniz?'
+        );
+
+        if (confirmed && session) {
+            // Eksiksiz ve doğru payload için detayları hazırla
+            const detailsWithAll = session.details.map((item, idx) => ({
+                ...item,
+                sirano: Number(item.sirano ?? (idx + 1)),
+                okumadetay_id: Number(item.okumadetay_id ?? 0),
+                okuma_id: Number(item.okuma_id ?? session.okuma_id ?? 0),
+                miktar: Number(item.miktar),
+                fiyat: Number(item.fiyat ?? 0),
+                tutar: Number(item.tutar ?? 0),
+                is_bulundu: !!item.is_bulundu,
+                is_aktarildi: !!item.is_aktarildi,
+                is_new: !!item.is_new,
+                is_deleted: !!item.is_deleted,
+                stok_kodu: item.stok_kodu ?? '',
+                stok_adi: item.stok_adi ?? ''
+            }));
+            const sessionPayload = {
+                ...session,
+                fisno: session.fisno,
+                toplam_adet: detailsWithAll.reduce((sum, item) => sum + item.miktar, 0),
+                toplam_tutar: detailsWithAll.reduce((sum, item) => sum + (item.tutar ?? 0), 0),
+                is_aktarildi: session.is_aktarildi ?? 'H',
+                is_new: !!session.is_new,
+                mikro_fisno: Number(session.mikro_fisno ?? 0),
+                mikro_fisseri: session.mikro_fisseri ?? '',
+                okuma_id: Number(session.okuma_id ?? 0),
+                details: detailsWithAll
+            };
+            this.isSending = true;
+            this.barcodeService.sendSession(sessionPayload).subscribe({
+                next: (response) => {
+                    this.barcodeService.removePendingSession(session.fisno);
+                    if (response && response.okuma_id) {
+                        this.router.navigate(['/history', response.okuma_id]);
+                    } else {
+                        this.router.navigate(['/history']);
+                    }
+                },
+                error: (err) => {
+                    console.error('Error sending session:', err);
+                    this.dialogService.alert('Hata', 'Fiş gönderilirken bir hata oluştu.', 'error');
+                    this.isSending = false;
+                },
+                complete: () => {
+                    this.isSending = false;
+                }
+            });
         }
     }
 

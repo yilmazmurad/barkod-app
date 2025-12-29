@@ -40,6 +40,7 @@ export class LoginComponent {
 
         this.authService.login(this.username, this.password).subscribe({
             next: () => {
+                this.loading = false;
                 const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/scan';
                 this.router.navigate([returnUrl]);
             },

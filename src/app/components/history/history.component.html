@@ -85,94 +85,101 @@
             </div>
         </div>
         }
-        <div class="flex-1 overflow-auto bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col">
+        <div class="overflow-auto bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col">
             <!-- Desktop Table View -->
-            <div class="hidden md:flex flex-1 overflow-auto">
-                <table class="min-w-full divide-y divide-gray-100">
+            <div class="hidden md:flex w-full overflow-auto">
+                <table class="min-w-full divide-y divide-gray-100 min-h-[80px] max-h-[220px] table-fixed text-sm">
                     <thead class="bg-gray-50/80 backdrop-blur-sm sticky top-0 z-10">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            <th class="px-2 py-2 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
                                 Fiş No
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            <th class="px-2 py-2 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
                                 Tarih
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            <th class="px-2 py-2 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
                                 Cari Kodu
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            <th class="px-2 py-2 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
                                 Cari Adı
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            <th class="px-2 py-2 text-left text-sm font-bold text-gray-500 uppercase tracking-wider">
                                 Kullanıcı
                             </th>
-                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            <th class="px-2 py-2 text-center text-sm font-bold text-gray-500 uppercase tracking-wider">
                                 Toplam Adet
                             </th>
-                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            <th class="px-2 py-2 text-center text-sm font-bold text-gray-500 uppercase tracking-wider">
                                 Toplam Tutar
                             </th>
-                            <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            <th class="px-2 py-2 text-right text-sm font-bold text-gray-500 uppercase tracking-wider">
                                 Aktarıldı
                             </th>
                         </tr>
                         <tr class="bg-gray-50 border-b border-gray-200">
-                            <th class="px-2 py-2">
+                            <th class="px-1 py-1">
                                 <input type="text" [(ngModel)]="filters.fisno" (ngModelChange)="onFilterChange()"
                                     class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="Ara...">
                             </th>
-                            <th class="px-2 py-2">
+                            <th class="px-1 py-1">
                                 <input type="date" [(ngModel)]="filters.tarih" (ngModelChange)="onFilterChange()"
                                     class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500">
                             </th>
-                            <th class="px-2 py-2">
+                            <th class="px-1 py-1">
                                 <input type="text" [(ngModel)]="filters.cari_kodu" (ngModelChange)="onFilterChange()"
                                     class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="Kod ara...">
                             </th>
-                            <th class="px-2 py-2">
+                            <th class="px-1 py-1">
                                 <input type="text" [(ngModel)]="filters.cari_isim" (ngModelChange)="onFilterChange()"
                                     class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="İsim ara...">
                             </th>
-                            <th class="px-2 py-2">
+                            <th class="px-1 py-1">
                                 <input type="text" [(ngModel)]="filters.username" (ngModelChange)="onFilterChange()"
                                     class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="Kullanıcı ara...">
                             </th>
-                            <th class="px-2 py-2"></th>
-                            <th class="px-2 py-2"></th>
-                            <th class="px-2 py-2"></th>
+                            <th class="px-1 py-1"></th>
+                            <th class="px-1 py-1"></th>
+                            <th class="px-1 py-1"></th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-50">
                         @for (item of filteredHistoryItems; track item.okuma_id) {
                         <tr (click)="viewDetail(item)"
-                            class="hover:bg-blue-50/30 transition-colors cursor-pointer group">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            class="hover:bg-blue-50/30 transition-colors cursor-pointer group"
+                            [ngClass]="item.is_urundurum === false ? 'bg-red-50/30' : ''">
+                            <td class="px-1 py-1 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {{ item.fisno }}
+                                @if (item.is_urundurum === false) {
+                                <div
+                                    class="inline-flex items-center ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-800">
+                                    Eksik Ürün</div>
+                                }
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td class="px-1 py-1 whitespace-nowrap text-sm text-gray-500">
                                 {{ item.tarih | date:'dd.MM.yyyy' }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td class="px-1 py-1 whitespace-nowrap text-sm text-gray-900">
                                 {{ item.cari_kodu }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                            <td class="px-1 py-1 whitespace-nowrap text-sm text-gray-900 font-medium">
                                 {{ item.cari_isim || '-' }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td class="px-1 py-1 whitespace-nowrap text-sm text-gray-500">
                                 {{ item.username || '-' }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
+                            <td class="px-1 py-1 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
                                 {{ item.toplam_adet }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
+                            <td class="px-1 py-1 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
                                 {{ item.toplam_tutar | currency:'TRY':'symbol-narrow':'1.2-2' }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                            <td class="px-1 py-1 whitespace-nowrap text-right text-sm font-medium">
+                                <span
+                                    class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium"
                                     [ngClass]="item.is_aktarildi === 'E' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'">
                                     {{ item.is_aktarildi === 'E' ? 'Evet' : 'Hayır' }}
                                 </span>
@@ -184,18 +191,19 @@
             </div>
 
             <!-- Mobile Card View -->
-            <div class="md:hidden flex-1 overflow-auto space-y-3 p-4">
+            <div class="md:hidden overflow-auto space-y-0 p-1">
                 @for (item of filteredHistoryItems; track item.okuma_id) {
                 <div (click)="viewDetail(item)"
-                    class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow cursor-pointer">
-                    <div class="flex justify-between items-start mb-3">
+                    class="bg-white rounded-xl shadow-sm border border-gray-100 p-1 hover:shadow-md transition-shadow cursor-pointer min-h-[36px]"
+                    [ngClass]="item.is_urundurum === false ? 'border-red-200 bg-red-50' : ''">
+                    <div class="flex justify-between items-start mb-1">
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-1">
-                                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <div class="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
                                 <h3 class="text-sm font-bold text-gray-900">{{ item.fisno }}</h3>
                             </div>
                             <p class="text-xs text-gray-600">{{ item.cari_isim || '-' }}</p>
-                            <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                            <div class="flex items-center gap-1 mt-0.5 text-xs text-gray-500">
                                 <span>{{ item.tarih | date:'dd.MM.yyyy' }}</span>
                                 @if (item.username) {
                                 <span>{{ item.username }}</span>
@@ -205,16 +213,22 @@
                         <div class="text-right">
                             <div class="text-sm font-bold text-gray-900">{{ item.toplam_adet }}</div>
                             <div class="text-xs text-gray-500">adet</div>
-                            <div class="text-sm font-bold text-green-600 mt-1">{{ item.toplam_tutar |
+                            <div class="text-sm font-bold text-green-600 mt-0.5">{{ item.toplam_tutar |
                                 currency:'TRY':'symbol-narrow':'1.2-2' }}</div>
                         </div>
                     </div>
-
-                    <div class="flex justify-between items-center">
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                            [ngClass]="item.is_aktarildi === 'E' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'">
-                            {{ item.is_aktarildi === 'E' ? 'Aktarıldı' : 'Bekliyor' }}
-                        </span>
+                    <div class="flex justify-between items-center gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium"
+                                [ngClass]="item.is_aktarildi === 'E' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'">
+                                {{ item.is_aktarildi === 'E' ? 'Aktarıldı' : 'Bekliyor' }}
+                            </span>
+                            @if (item.is_urundurum === false) {
+                            <span
+                                class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Eksik
+                                Ürün</span>
+                            }
+                        </div>
                         <div class="text-xs text-gray-500">{{ item.cari_kodu }}</div>
                     </div>
                 </div>

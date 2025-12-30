@@ -93,6 +93,12 @@ export class ApiService {
         });
     }
 
+    transferReceipt(okumaId: number): Observable<{ mikro_fisno: number }> {
+        return this.post<{ mikro_fisno: number }>('stok/mikroyagonder', {
+            okuma_id: okumaId
+        });
+    }
+
     saveReceipt(data: any): Observable<HistoryDetail> {
         return this.post<HistoryDetail>('stok/okumafisikaydet', data);
     }

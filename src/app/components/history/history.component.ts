@@ -7,6 +7,7 @@ import { debounceTime } from 'rxjs/operators';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { ExcelService } from '../../services/excel.service';
+import { DialogService } from '../../services/dialog.service';
 
 export interface HistoryItem {
     okuma_id: number;
@@ -55,7 +56,8 @@ export class HistoryComponent implements OnInit {
         private apiService: ApiService,
         public authService: AuthService,
         private excelService: ExcelService,
-        private router: Router
+        private router: Router,
+        private dialogService: DialogService
     ) {
         this.searchSubject.pipe(
             debounceTime(300)
@@ -186,6 +188,56 @@ export class HistoryComponent implements OnInit {
 
     toggleSearch(): void {
         this.showSearch = !this.showSearch;
+    }
+
+    async transferReceipt(item: HistoryItem): Promise<void> {
+        if (item.is_aktarildi !== 'H') {
+            return;
+        }
+
+        // Ürün eksikliği kontrolü
+        const productsMissing = item.is_urundurum !== true;
+        // Cari kodu kontrolü
+        const cariMissing = !item.cari_kodu || item.cari_kodu.trim() === '';
+
+        // Hata mesajını oluştur
+        let errorMessage = '';
+        if (productsMissing && cariMissing) {
+            errorMessage = 'Ürünler eksik ve cari kodu bulunmuyor. Aktarım yapılamaz.';
+        } else if (productsMissing) {
+            errorMessage = 'Ürünler eksik. Aktarım yapılamaz.';
+        } else if (cariMissing) {
+            errorMessage = 'Cari kodu bulunmuyor. Aktarım yapılamaz.';
+        }
+
+        if (errorMessage) {
+            this.dialogService.alert('Uyarı', errorMessage);
+            return;
+        }
+
+        const confirmed = await this.dialogService.confirm(
+            'Fiş Aktarımı',
+            `Fiş No: ${item.fisno} - Aktarmak istediğinizden emin misiniz?`
+        );
+
+        if (confirmed) {
+            this.apiService.transferReceipt(item.okuma_id).subscribe({
+                next: (response) => {
+                    if (response.mikro_fisno > 0) {
+                        this.dialogService.alert('Başarılı', 'Fiş başarıyla aktarıldı.');
+                        // Listeyi yenile
+                        this.currentPage = 1;
+                        this.loadHistory();
+                    } else {
+                        this.dialogService.alert('Hata', 'Fiş aktarımı başarısız oldu.');
+                    }
+                },
+                error: (err) => {
+                    console.error('Aktarım hatası:', err);
+                    this.dialogService.alert('Hata', 'Fiş aktarımı sırasında bir hata oluştu.');
+                }
+            });
+        }
     }
 
     logout(): void {

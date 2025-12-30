@@ -19,6 +19,10 @@ export class HistoryDetailComponent implements OnInit {
     isLoading = true;
     error: string | null = null;
 
+    get canTransfer(): boolean {
+        return this.detail ? this.detail.is_aktarildi === 'H' : false;
+    }
+
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -126,5 +130,54 @@ export class HistoryDetailComponent implements OnInit {
 
         const fileName = `Fis_Detay_${this.detail.fisno}_${new Date().toISOString().split('T')[0]}`;
         this.excelService.exportToExcel(this.detail.details, fileName, columns, summary, 'xlsx');
+    }
+
+    async transferReceipt(): Promise<void> {
+        if (!this.detail || this.detail.is_aktarildi !== 'H') return;
+
+        // Ürün eksikliği kontrolü: Tüm detaylarda is_bulundu true olmalı
+        const allProductsFound = this.detail.details.every(item => item.is_bulundu === true);
+        const productsMissing = !allProductsFound;
+
+        // Cari kodu kontrolü
+        const cariMissing = !this.detail.cari_kodu || this.detail.cari_kodu.trim() === '';
+
+        // Hata mesajını oluştur
+        let errorMessage = '';
+        if (productsMissing && cariMissing) {
+            errorMessage = 'Ürünler eksik ve cari kodu bulunmuyor. Aktarım yapılamaz.';
+        } else if (productsMissing) {
+            errorMessage = 'Ürünler eksik. Aktarım yapılamaz.';
+        } else if (cariMissing) {
+            errorMessage = 'Cari kodu bulunmuyor. Aktarım yapılamaz.';
+        }
+
+        if (errorMessage) {
+            this.dialogService.alert('Uyarı', errorMessage);
+            return;
+        }
+
+        const confirmed = await this.dialogService.confirm(
+            'Fiş Aktarımı',
+            `Fiş No: ${this.detail.fisno} - Aktarmak istediğinizden emin misiniz?`
+        );
+
+        if (confirmed) {
+            this.apiService.transferReceipt(this.detail.okuma_id).subscribe({
+                next: (response) => {
+                    if (response.mikro_fisno > 0) {
+                        this.dialogService.alert('Başarılı', 'Fiş başarıyla aktarıldı.');
+                        // Detayı yenile
+                        this.loadDetail(this.detail!.okuma_id);
+                    } else {
+                        this.dialogService.alert('Hata', 'Fiş aktarımı başarısız oldu.');
+                    }
+                },
+                error: (err) => {
+                    console.error('Aktarım hatası:', err);
+                    this.dialogService.alert('Hata', 'Fiş aktarımı sırasında bir hata oluştu.');
+                }
+            });
+        }
     }
 }

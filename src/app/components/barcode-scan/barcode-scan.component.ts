@@ -365,7 +365,8 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
             is_bulundu: item.is_bulundu ?? false,
             is_aktarildi: item.is_aktarildi ?? false,
             is_new: item.is_new ?? true,
-            is_deleted: item.is_deleted ?? false
+            is_deleted: item.is_deleted ?? false,
+            timestamp: this.formatTimestamp(item.timestamp)
         }));
 
         // Cari isim önceliği: seçili cari varsa onu, yoksa manuel girileni kullan
@@ -432,5 +433,16 @@ export class BarcodeScanComponent implements OnInit, OnDestroy {
 
     toggleDetails() {
         this.isDetailsOpen = !this.isDetailsOpen;
+    }
+
+    private formatTimestamp(date: Date): string {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const seconds = String(d.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     }
 }

@@ -9,6 +9,11 @@
                     filteredHistoryItems.length }} kayıt</span>
             </div>
             <div class="hidden md:flex gap-2">
+                <div class="flex items-center gap-2">
+                    <input type="text" [(ngModel)]="filters.genel_arama" (ngModelChange)="onFilterChange()"
+                        class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        placeholder="Genel arama...">
+                </div>
                 <button (click)="exportToExcel()"
                     class="px-4 py-2 bg-green-100 text-green-700 text-sm font-medium rounded-lg hover:bg-green-200 transition-colors flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -17,28 +22,13 @@
                     </svg>
                     Excel
                 </button>
-                <div class="relative">
-                    <input type="text" [(ngModel)]="filters.genel_arama" (ngModelChange)="onFilterChange()"
-                        placeholder="Genel arama..."
-                        class="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 w-64">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                    </div>
-                </div>
             </div>
 
             <!-- Mobile Actions -->
             <div class="md:hidden flex gap-2">
-                <button (click)="toggleSearch()"
-                    class="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                </button>
+                <input type="text" [(ngModel)]="filters.genel_arama" (ngModelChange)="onFilterChange()"
+                    class="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Ara...">
                 <button (click)="exportToExcel()"
                     class="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,29 +52,6 @@
             <p class="text-sm text-gray-400 mt-1">Henüz geçmiş fiş bulunmuyor.</p>
         </div>
         } @else {
-        <!-- Mobile Search Panel -->
-        @if (showSearch) {
-        <div class="md:hidden shrink-0 bg-white border-b border-gray-200 p-4">
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                </div>
-                <input type="text" [(ngModel)]="filters.genel_arama" (ngModelChange)="onFilterChange()"
-                    class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    placeholder="Genel arama..." />
-                <button (click)="toggleSearch()" class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    <svg class="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-        }
         <div class="overflow-auto bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col">
             <!-- Desktop Table View -->
             <div class="hidden md:flex w-full overflow-auto">
@@ -111,6 +78,9 @@
                             </th>
                             <th class="px-2 py-2 text-center text-sm font-bold text-gray-500 uppercase tracking-wider">
                                 Toplam Tutar
+                            </th>
+                            <th class="px-2 py-2 text-center text-sm font-bold text-gray-500 uppercase tracking-wider">
+                                Mikro Fiş No
                             </th>
                             <th class="px-2 py-2 text-right text-sm font-bold text-gray-500 uppercase tracking-wider">
                                 Aktarıldı
@@ -143,6 +113,11 @@
                             </th>
                             <th class="px-1 py-1"></th>
                             <th class="px-1 py-1"></th>
+                            <th class="px-1 py-1">
+                                <input type="text" [(ngModel)]="filters.mikro_fisno" (ngModelChange)="onFilterChange()"
+                                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Mikro fiş no...">
+                            </th>
                             <th class="px-1 py-1"></th>
                         </tr>
                     </thead>
@@ -176,6 +151,9 @@
                             </td>
                             <td class="px-1 py-1 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
                                 {{ item.toplam_tutar | currency:'TRY':'symbol-narrow':'1.2-2' }}
+                            </td>
+                            <td class="px-1 py-1 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
+                                {{ item.mikro_fisno || '-' }}
                             </td>
                             <td class="px-1 py-1 whitespace-nowrap text-right text-sm font-medium">
                                 @if (item.is_aktarildi === 'H') {
@@ -237,6 +215,9 @@
                             <div class="text-xs text-gray-500">adet</div>
                             <div class="text-sm font-bold text-green-600 mt-0.5">{{ item.toplam_tutar |
                                 currency:'TRY':'symbol-narrow':'1.2-2' }}</div>
+                            @if (item.mikro_fisno) {
+                            <div class="text-xs text-blue-600 mt-0.5">Mikro: {{ item.mikro_fisno }}</div>
+                            }
                         </div>
                     </div>
                     <div class="flex justify-between items-center gap-2">

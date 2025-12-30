@@ -73,6 +73,12 @@
                             {{ detail.is_aktarildi === 'E' ? 'Aktarıldı' : 'Bekliyor' }}
                         </span>
                     </div>
+                    @if (detail.mikro_fisno) {
+                    <div class="w-full md:w-auto flex justify-between md:justify-end gap-4">
+                        <span class="text-sm text-gray-500">Mikro Fiş No:</span>
+                        <span class="font-bold text-blue-600">{{ detail.mikro_fisno }}</span>
+                    </div>
+                    }
                 </div>
             </div>
             <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">

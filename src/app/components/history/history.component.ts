@@ -39,7 +39,6 @@ export class HistoryComponent implements OnInit {
     currentPage = 1;
     pageSize = 20;
     hasMore = true;
-    showSearch: boolean = false;
 
     filters = {
         fisno: '',
@@ -47,6 +46,7 @@ export class HistoryComponent implements OnInit {
         cari_kodu: '',
         cari_isim: '',
         username: '',
+        mikro_fisno: '',
         genel_arama: ''
     };
 
@@ -149,6 +149,10 @@ export class HistoryComponent implements OnInit {
             );
         }
 
+        if (this.filters.mikro_fisno) {
+            filtered = filtered.filter(item => item.mikro_fisno.toString().includes(this.filters.mikro_fisno));
+        }
+
         this.filteredHistoryItems = filtered;
     }
 
@@ -172,6 +176,7 @@ export class HistoryComponent implements OnInit {
             { header: 'Kullanıcı', field: 'username' },
             { header: 'Toplam Adet', field: 'toplam_adet' },
             { header: 'Toplam Tutar', field: 'toplam_tutar' },
+            { header: 'Mikro Fiş No', field: 'mikro_fisno' },
             { header: 'Aktarıldı', field: 'is_aktarildi', format: (row: any) => row.is_aktarildi === 'E' ? 'Evet' : 'Hayır' }
         ];
 
@@ -184,10 +189,6 @@ export class HistoryComponent implements OnInit {
 
     navigateToPending(): void {
         this.router.navigate(['/pending']);
-    }
-
-    toggleSearch(): void {
-        this.showSearch = !this.showSearch;
     }
 
     async transferReceipt(item: HistoryItem): Promise<void> {
